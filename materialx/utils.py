@@ -9,15 +9,21 @@ import shutil
 import MaterialX as mx
 import bpy
 
+from . import ADDON_PREFIX
+
 from . import logging
-log = logging.Log('utils.mx')
+log = logging.Log('utils')
 
 
-PLUGIN_ROOT_DIR = Path(__file__).parent
+ADDON_ROOT_DIR = Path(__file__).parent
 MX_LIBS_FOLDER = "libraries"
-MX_LIBS_DIR = PLUGIN_ROOT_DIR / "libraries"
+MX_LIBS_DIR = ADDON_ROOT_DIR / "libraries"
 
 os.environ['MATERIALX_SEARCH_PATH'] = str(MX_LIBS_DIR)
+
+
+def with_prefix(name, separator='.'):
+    return f"{ADDON_PREFIX}{separator}{name}"
 
 
 def title_str(str):

@@ -18,6 +18,7 @@ bl_info = {
     "category": "Material",
 }
 
+ADDON_PREFIX = "materialx"
 
 if "bpy" in locals():
     import importlib

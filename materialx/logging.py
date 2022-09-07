@@ -4,11 +4,13 @@
 import sys
 import logging.handlers
 
+from . import ADDON_PREFIX
+
 
 FORMAT_STR = "%(asctime)s %(levelname)s %(name)s [%(thread)d]:  %(message)s"
 
 # root logger for the addon
-logger = logging.getLogger('usdhydra')
+logger = logging.getLogger(ADDON_PREFIX)
 logger.setLevel('DEBUG')
 
 # file_handler = logging.handlers.RotatingFileHandler(PLUGIN_ROOT_DIR / 'usdhydra.log',
