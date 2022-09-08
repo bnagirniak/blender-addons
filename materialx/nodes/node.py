@@ -12,7 +12,7 @@ log = logging.Log("nodes.node")
 
 
 class MxNodeInputSocket(bpy.types.NodeSocket):
-    bl_idname = 'usdhydra.MxNodeInputSocket'
+    bl_idname = utils.with_prefix('MxNodeInputSocket')
     bl_label = "MX Input Socket"
 
     def draw(self, context, layout, node, text):
@@ -41,7 +41,7 @@ class MxNodeInputSocket(bpy.types.NodeSocket):
 
 
 class MxNodeOutputSocket(bpy.types.NodeSocket):
-    bl_idname = 'usdhydra.MxNodeOutputSocket'
+    bl_idname = utils.with_prefix('MxNodeOutputSocket')
     bl_label = "MX Output Socket"
 
     def draw(self, context, layout, node, text):
@@ -65,8 +65,7 @@ class MxNodeOutputSocket(bpy.types.NodeSocket):
 class MxNode(bpy.types.ShaderNode):
     """Base node from which all MaterialX nodes will be made"""
     _file_path: str
-    bl_compatibility = {'USDHydra'}
-    bl_idname = 'usdhydra.'
+    # bl_compatibility = {'USDHydra'}
     # bl_icon = 'MATERIAL'
 
     bl_label = ""
@@ -83,7 +82,7 @@ class MxNode(bpy.types.ShaderNode):
             # loading nodedefs
             doc = mx.createDocument()
             search_path = mx.FileSearchPath(str(utils.MX_LIBS_DIR))
-            mx.readFromXmlFile(doc, str(utils.MX_LIBS_DIR / cls._file_path), searchPath=search_path)
+            mx.readFromXmlFile(doc, str(utils.ADDON_ROOT_DIR / cls._file_path), searchPath=search_path)
             for val in cls._data_types.values():
                 val['nd'] = doc.getNodeDef(val['nd_name'])
 
@@ -187,6 +186,9 @@ class MxNode(bpy.types.ShaderNode):
                 layout1.prop(self, self._input_prop_name(name))
 
     def draw_node_view(self, context, layout):
+        return
+
+        # TODO: enable implementation
         from ...ui.material import USDHYDRA_MATERIAL_OP_invoke_popup_input_nodes
         layout.use_property_split = True
         layout.use_property_decorate = True
@@ -394,7 +396,7 @@ class MxNode(bpy.types.ShaderNode):
 
     @classmethod
     def poll(cls, tree):
-        return tree.bl_idname == 'usdhydra.MxNodeTree'
+        return tree.bl_idname == utils.with_prefix('MxNodeTree')
 
     def update_ui_folders(self, context):
         for i, nd_input in enumerate(utils.get_nodedef_inputs(self.nodedef, False)):
