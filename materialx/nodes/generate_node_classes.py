@@ -257,20 +257,9 @@ def generate_classes_code(file_path, prefix, category):
 
     code_strings = []
     code_strings.append(
-f"""#**********************************************************************
-# Copyright 2020 Advanced Micro Devices, Inc
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#********************************************************************
+f"""# Automatically generated classes for MaterialX nodes.
+# Do not edit manually, changes will be overwritten.
+
 import bpy
 from bpy.props import (
     EnumProperty,
@@ -281,7 +270,7 @@ from bpy.props import (
     PointerProperty,
     FloatVectorProperty,
 ) 
-from .base_node import MxNode
+from .node import MxNode
 
 
 FILE_PATH = r"{file_path.relative_to(utils.ADDON_ROOT_DIR)}"

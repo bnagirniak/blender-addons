@@ -20,22 +20,26 @@ bl_info = {
 
 ADDON_PREFIX = "materialx"
 
-if "bpy" in locals():
-    import importlib
-    if "node_tree" in locals():
-        importlib.reload(node_tree)
-    if "utils" in locals():
-        importlib.reload(utils)
-    if "operators" in locals():
-        importlib.reload(operators)
-    if "menues" in locals():
-        importlib.reload(menus)
-    if "preferences" in locals():
-        importlib.reload(preferences)
-else:
-    from .enum_values import *
-    from .functions import *
-    from .operators import *
-    from .menus import *
-    from .preferences import *
 
+import bpy
+
+from . import preferences
+from . import node_tree
+from . import nodes
+
+from .utils import logging
+log = logging.Log("")
+
+
+def register():
+    log("register")
+    bpy.utils.register_class(preferences.AddonPreferences)
+    bpy.utils.register_class(node_tree.MxNodeTree)
+    nodes.register()
+
+
+def unregister():
+    log("unregister")
+    bpy.utils.register_class(preferences.AddonPreferences)
+    nodes.unregister()
+    bpy.utils.unregister_class(node_tree.MxNodeTree)

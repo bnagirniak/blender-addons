@@ -26,13 +26,8 @@ class MxNodeTree(bpy.types.ShaderNodeTree):
     bl_label = "MaterialX"
     bl_icon = "NODE_MATERIAL"
     bl_idname = utils.with_prefix("MxNodeTree")
-    COMPAT_ENGINES = {'HdUSD'}
 
     _do_update = True
-
-    @classmethod
-    def poll(cls, context):
-        return context.engine in cls.COMPAT_ENGINES
 
     @property
     def output_node(self):
@@ -148,9 +143,8 @@ class MxNodeTree(bpy.types.ShaderNodeTree):
 
                     val = mx_input.getValue()
                     if val is not None:
-                        node.set_input_value(
-                            input_name,
-                            utils.parse_value(node, val, mx_input.getType(), file_prefix))
+                        node.set_input_value(input_name, utils.parse_value(
+                            node, val, mx_input.getType(), file_prefix))
                         continue
 
                     node_name = mx_input.getNodeName()

@@ -7,10 +7,11 @@ from pathlib import Path
 import bpy
 import nodeitems_utils
 
-from .. import log
-from . import base_node, categories
+from . import node, categories
+from ..utils import with_prefix
 
-gen_modules = [importlib.import_module(f"hdusd.mx_nodes.nodes.{f.name[:-len(f.suffix)]}")
+
+gen_modules = [importlib.import_module(f"materialx.nodes.{f.name[:-len(f.suffix)]}")
                for f in Path(__file__).parent.glob("gen_*.py")]
 
 mx_node_classes = []
@@ -22,8 +23,8 @@ mx_node_classes = sorted(mx_node_classes, key=lambda cls: (cls.category.lower(),
 
 
 register_sockets, unregister_sockets = bpy.utils.register_classes_factory([
-    base_node.MxNodeInputSocket,
-    base_node.MxNodeOutputSocket,
+    node.MxNodeInputSocket,
+    node.MxNodeOutputSocket,
 ])
 register_nodes, unregister_nodes = bpy.utils.register_classes_factory(mx_node_classes)
 
@@ -32,11 +33,11 @@ def register():
     register_sockets()
     register_nodes()
 
-    nodeitems_utils.register_node_categories("'HdUSD_MX_NODES", categories.get_node_categories())
+    nodeitems_utils.register_node_categories(with_prefix("MX_NODES"), categories.get_node_categories())
 
 
 def unregister():
-    nodeitems_utils.unregister_node_categories("'HdUSD_MX_NODES")
+    nodeitems_utils.unregister_node_categories(with_prefix("MX_NODES"))
 
     unregister_nodes()
     unregister_sockets()
