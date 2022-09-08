@@ -7,9 +7,10 @@ from pathlib import Path
 import bpy
 import nodeitems_utils
 
-from . import node, categories
+from . import node, categories, generate_node_classes
 from ..utils import with_prefix
 
+generate_node_classes.generate_basic_classes()
 
 gen_modules = [importlib.import_module(f"materialx.nodes.{f.name[:-len(f.suffix)]}")
                for f in Path(__file__).parent.glob("gen_*.py")]

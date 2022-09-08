@@ -27,7 +27,7 @@ from . import preferences
 from . import node_tree
 from . import nodes
 
-from .utils import logging
+from . import logging
 log = logging.Log("")
 
 
@@ -40,6 +40,6 @@ def register():
 
 def unregister():
     log("unregister")
-    bpy.utils.register_class(preferences.AddonPreferences)
     nodes.unregister()
     bpy.utils.unregister_class(node_tree.MxNodeTree)
+    bpy.utils.unregister_class(preferences.AddonPreferences)

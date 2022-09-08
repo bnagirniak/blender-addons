@@ -233,8 +233,8 @@ class MxNodeTree(bpy.types.ShaderNodeTree):
         def create_nodes():
             self.nodes.clear()
 
-            mat_node = self.nodes.new('hdusd.MxNode_STD_surfacematerial')
-            node = self.nodes.new(f'hdusd.MxNode_{node_name}')
+            mat_node = self.nodes.new(utils.with_prefix('MxNode_STD_surfacematerial'))
+            node = self.nodes.new(utils.with_prefix(f'MxNode_{node_name}'))
             node.location = (mat_node.location[0] - NODE_LAYER_SEPARATION_WIDTH,
                              mat_node.location[1])
             self.links.new(node.outputs[0], mat_node.inputs[0])
@@ -252,9 +252,10 @@ class MxNodeTree(bpy.types.ShaderNodeTree):
     def update_(self):
         self.update_links()
 
-        for material in bpy.data.materials:
-            if material.hdusd.mx_node_tree and material.hdusd.mx_node_tree.name == self.name:
-                material.hdusd.update()
+        # TODO: Uncomment
+        # for material in bpy.data.materials:
+        #     if material.hdusd.mx_node_tree and material.hdusd.mx_node_tree.name == self.name:
+        #         material.hdusd.update()
 
         for window in bpy.context.window_manager.windows:
             for area in window.screen.areas:

@@ -7,7 +7,7 @@ import bpy
 
 from .. import utils
 
-from ..utils import logging
+from .. import logging
 log = logging.Log("nodes.node")
 
 

@@ -8,6 +8,9 @@ import MaterialX as mx
 
 from .. import utils
 
+from .. import logging
+log = logging.Log("nodes.generate_node_classes")
+
 
 def parse_value_str(val_str, mx_type, *, first_only=False, is_enum=False):
     if mx_type == 'string':
@@ -108,7 +111,7 @@ def generate_property_code(mx_param, category):
             break
 
         prop_type = "StringProperty"
-        print("Unsupported mx_type", mx_type, mx_param, mx_param.getParent().getName())
+        log.warn("Unsupported mx_type", mx_type, mx_param, mx_param.getParent().getName())
         break
 
     for mx_attr, prop_attr in (('uimin', 'min'), ('uimax', 'max'),
@@ -288,7 +291,7 @@ FILE_PATH = r"{file_path.relative_to(utils.ADDON_ROOT_DIR)}"
             continue
 
         if nodedef_data_type(nodedef) in IGNORE_NODEDEF_DATA_TYPE:
-            print(f"Ignoring nodedef {nodedef.getName()}")
+            log.warn(f"Ignoring nodedef {nodedef.getName()}")
             continue
 
         node_def_classes_by_node[(nodedef.getNodeString(), nodedef.getAttribute('nodegroup'))].\
@@ -307,11 +310,8 @@ mx_node_classes = [{', '.join(mx_node_class_names)}]
     return '\n'.join(code_strings)
 
 
-def main():
+def generate_basic_classes():
     gen_code_dir = utils.ADDON_ROOT_DIR / "nodes"
-
-    for f in gen_code_dir.glob("gen_*.py"):
-        f.unlink()
 
     files = [
         ('PBR', "PBR", utils.MX_LIBS_DIR / "bxdf/standard_surface.mtlx"),
@@ -326,10 +326,9 @@ def main():
         module_name = f"gen_{file_path.name[:-len(file_path.suffix)]}"
         module_file = gen_code_dir / f"{module_name}.py"
 
-        print(f"Generating {module_file} from {file_path}")
+        if module_file.is_file():
+            continue
+
+        log(f"Generating {module_file} from {file_path}")
         module_code = generate_classes_code(file_path, prefix, category)
         module_file.write_text(module_code)
-
-
-if __name__ == "__main__":
-    main()
