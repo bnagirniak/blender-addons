@@ -7,7 +7,7 @@ from pathlib import Path
 import bpy
 import nodeitems_utils
 
-from . import node, categories, generate_node_classes
+from . import node, categories, generate_node_classes, ui
 from ..utils import with_prefix
 
 generate_node_classes.generate_basic_classes()
@@ -27,11 +27,21 @@ register_sockets, unregister_sockets = bpy.utils.register_classes_factory([
     node.MxNodeInputSocket,
     node.MxNodeOutputSocket,
 ])
+register_ui, unregister_ui = bpy.utils.register_classes_factory([
+    ui.NODES_OP_import_file,
+    ui.NODES_OP_export_file,
+    ui.NODES_OP_export_console,
+    ui.NODES_OP_create_basic_nodes,
+    ui.NODES_PT_tools,
+    ui.NODES_PT_dev,
+])
+
 register_nodes, unregister_nodes = bpy.utils.register_classes_factory(mx_node_classes)
 
 
 def register():
     register_sockets()
+    register_ui()
     register_nodes()
 
     nodeitems_utils.register_node_categories(with_prefix("MX_NODES"), categories.get_node_categories())
@@ -41,6 +51,7 @@ def unregister():
     nodeitems_utils.unregister_node_categories(with_prefix("MX_NODES"))
 
     unregister_nodes()
+    unregister_ui()
     unregister_sockets()
 
 

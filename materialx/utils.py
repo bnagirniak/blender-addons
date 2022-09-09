@@ -22,8 +22,8 @@ MX_LIBS_DIR = ADDON_ROOT_DIR / "libraries"
 os.environ['MATERIALX_SEARCH_PATH'] = str(MX_LIBS_DIR)
 
 
-def with_prefix(name, separator='.'):
-    return f"{ADDON_PREFIX}{separator}{name}"
+def with_prefix(name, separator='.', upper=False):
+    return f"{ADDON_PREFIX.upper() if upper else ADDON_PREFIX}{separator}{name}"
 
 
 def title_str(str):

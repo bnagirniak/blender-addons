@@ -5,7 +5,6 @@ import MaterialX as mx
 
 import bpy
 
-from .nodes import get_mx_node_cls
 from . import utils
 
 from . import logging
@@ -93,6 +92,8 @@ class MxNodeTree(bpy.types.ShaderNodeTree):
             input.setNodeName(node.getName())
 
         def do_import():
+            from .nodes import get_mx_node_cls
+
             self.nodes.clear()
 
             def import_node(mx_node, mx_output_name=None, look_nodedef=True):
