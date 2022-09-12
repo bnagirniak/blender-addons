@@ -7,7 +7,7 @@ from collections import defaultdict
 import MaterialX as mx
 
 from .. import utils
-from ..utils import ADDON_ROOT_DIR, NODE_CLASSES_DIR
+from ..utils import NODE_CLASSES_DIR
 from .. import logging
 log = logging.Log("nodes.generate_node_classes")
 
@@ -255,15 +255,6 @@ class {class_name}(MxNode):
     return '\n'.join(code_strings)
 
 
-def generate_init_code():
-    code_strings = [
-        "import sys",
-        f"sys.path.append(r'{ADDON_ROOT_DIR}')",
-    ]
-
-    return '\n'.join(code_strings)
-
-
 def generate_classes_code(file_path, prefix, category):
     IGNORE_NODEDEF_DATA_TYPE = ('matrix33', 'matrix44', 'matrix33FA', 'matrix44FA')
 
@@ -344,4 +335,7 @@ def generate_basic_classes():
         module_file.write_text(module_code)
 
     module_file = gen_code_dir / "__init__.py"
-    module_file.write_text(generate_init_code())
+    module_file.write_text(
+"""# Automatically generated classes for MaterialX nodes.
+# Do not edit manually, changes will be overwritten.
+""")

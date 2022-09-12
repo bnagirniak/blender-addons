@@ -32,13 +32,13 @@ def with_prefix(name, separator='.', upper=False):
     return f"{ADDON_PREFIX.upper() if upper else ADDON_PREFIX}{separator}{name}"
 
 
-def title_str(string):
-    s = string.replace('_', ' ')
+def title_str(val):
+    s = val.replace('_', ' ')
     return s[:1].upper() + s[1:]
 
 
-def code_str(string):
-    return string.replace(' ', '_').replace('.', '_')
+def code_str(val):
+    return val.replace(' ', '_').replace('.', '_')
 
 
 def set_param_value(mx_param, val, nd_type, nd_output=None):
