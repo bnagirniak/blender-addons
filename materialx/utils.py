@@ -16,8 +16,13 @@ log = logging.Log('utils')
 
 
 ADDON_ROOT_DIR = Path(__file__).parent
+ADDON_DATA_DIR = Path(bpy.utils.user_resource("SCRIPTS", path=f"addons/{ADDON_PREFIX}", create=True))
+
 MX_LIBS_FOLDER = "libraries"
 MX_LIBS_DIR = ADDON_ROOT_DIR / "libraries"
+
+MATLIB_FOLDER = "matlib"
+MATLIB_DIR = ADDON_DATA_DIR / MATLIB_FOLDER
 
 os.environ['MATERIALX_SEARCH_PATH'] = str(MX_LIBS_DIR)
 
@@ -372,3 +377,12 @@ def pass_node_reroute(link):
         link = link.from_node.inputs[0].links[0]
 
     return link if link.is_valid else None
+
+
+def update_ui(area_type='PROPERTIES', region_type='WINDOW'):
+    for window in bpy.context.window_manager.windows:
+        for area in window.screen.areas:
+            if area.type == area_type:
+                for region in area.regions:
+                    if region.type == region_type:
+                        region.tag_redraw()
