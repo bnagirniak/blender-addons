@@ -10,9 +10,7 @@ import bpy
 
 from .. import utils
 from ..node_tree import MxNodeTree
-from ..utils import mx as mx_utils
 from .manager import manager
-#from .. import config
 
 from ..utils import logging
 log = logging.Log('matlib.ui')
@@ -24,7 +22,7 @@ class MATERIAL_OP_matlib_clear_search(bpy.types.Operator):
     bl_label = ""
 
     def execute(self, context):
-        context.window_manager.materialx.matlib.search = ''
+        utils.mx_properties(context.window_manager).matlib.search = ''
         return {"FINISHED"}
 
 
@@ -44,23 +42,23 @@ class MATLIB_OP_import_material(bpy.types.Operator):
     bl_label = "Import Material Package"
 
     def execute(self, context):
-        matlib_prop = context.window_manager.materialx.matlib
+        matlib_prop = utils.mx_properties(context.window_manager).matlib
         package = matlib_prop.package
 
         mtlx_file = package.unzip()
 
         # getting/creating MxNodeTree
         bl_material = context.material
-        mx_node_tree = bl_material.materialx.mx_node_tree
-        if not bl_material.materialx.mx_node_tree:
+        mx_node_tree = utils.mx_properties(bl_material).mx_node_tree
+        if not mx_node_tree:
             mx_node_tree = bpy.data.node_groups.new(f"MX_{bl_material.name}",
                                                     type=MxNodeTree.bl_idname)
-            bl_material.materialx.mx_node_tree = mx_node_tree
+            utils.mx_properties(bl_material).mx_node_tree = mx_node_tree
 
         log(f"Reading: {mtlx_file}")
         doc = mx.createDocument()
         search_path = mx.FileSearchPath(str(mtlx_file.parent))
-        search_path.append(str(mx_utils.MX_LIBS_DIR))
+        search_path.append(str(utils.MX_LIBS_DIR))
         try:
             mx.readFromXmlFile(doc, str(mtlx_file), searchPath=search_path)
             mx_node_tree.import_(doc, mtlx_file)
@@ -78,7 +76,7 @@ class MATLIB_OP_load_package(bpy.types.Operator):
     bl_label = "Download Package"
 
     def execute(self, context):
-        matlib_prop = context.window_manager.materialx.matlib
+        matlib_prop = utils.mx_properties(context.window_manager).matlib
         manager.load_package(matlib_prop.package)
 
         return {"FINISHED"}
@@ -94,7 +92,7 @@ class MATLIB_PT_matlib(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-        matlib_prop = context.window_manager.materialx.matlib
+        matlib_prop = utils.mx_properties(context.window_manager).matlib
 
         manager.check_load_materials()
 

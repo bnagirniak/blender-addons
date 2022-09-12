@@ -7,7 +7,8 @@ from collections import defaultdict
 import MaterialX as mx
 
 from .. import utils
-from ..utils import NODE_CLASSES_DIR
+from .. import ADDON_ALIAS
+
 from .. import logging
 log = logging.Log("nodes.generate_node_classes")
 
@@ -273,7 +274,7 @@ from bpy.props import (
     PointerProperty,
     FloatVectorProperty,
 ) 
-from materialx.nodes.node import MxNode
+from {ADDON_ALIAS}.nodes.node import MxNode
 
 
 FILE_PATH = r"{file_path}"
@@ -311,7 +312,7 @@ mx_node_classes = [{', '.join(mx_node_class_names)}]
 
 
 def generate_basic_classes():
-    gen_code_dir = NODE_CLASSES_DIR
+    gen_code_dir = utils.NODE_CLASSES_DIR
     gen_code_dir.mkdir(exist_ok=True)
 
     files = [
