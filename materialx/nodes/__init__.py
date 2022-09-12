@@ -2,21 +2,20 @@
 # Copyright 2022, AMD
 
 import importlib
-from pathlib import Path
 
 import bpy
 import nodeitems_utils
 import sys
 
 from . import node, categories, generate_node_classes, ui
-from ..utils import with_prefix, ADDON_DATA_DIR, NODE_CLASSES_DIR, NODE_CLASSES_FOLDER
+from .. import utils
 
 
-sys.path.append(str(ADDON_DATA_DIR))
+sys.path.append(str(utils.ADDON_DATA_DIR))
 generate_node_classes.generate_basic_classes()
 
-gen_modules = [importlib.import_module(f"{NODE_CLASSES_FOLDER}.{f.name[:-len(f.suffix)]}")
-               for f in NODE_CLASSES_DIR.glob("gen_*.py")]
+gen_modules = [importlib.import_module(f"{utils.NODE_CLASSES_FOLDER}.{f.name[:-len(f.suffix)]}")
+               for f in utils.NODE_CLASSES_DIR.glob("gen_*.py")]
 
 mx_node_classes = []
 for mod in gen_modules:
@@ -47,11 +46,11 @@ def register():
     register_ui()
     register_nodes()
 
-    nodeitems_utils.register_node_categories(with_prefix("MX_NODES"), categories.get_node_categories())
+    nodeitems_utils.register_node_categories(utils.with_prefix("MX_NODES"), categories.get_node_categories())
 
 
 def unregister():
-    nodeitems_utils.unregister_node_categories(with_prefix("MX_NODES"))
+    nodeitems_utils.unregister_node_categories(utils.with_prefix("MX_NODES"))
 
     unregister_nodes()
     unregister_ui()

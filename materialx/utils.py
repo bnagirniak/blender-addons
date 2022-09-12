@@ -21,7 +21,7 @@ ADDON_DATA_DIR = Path(bpy.utils.user_resource("SCRIPTS", path=f"addons/{ADDON_PR
 MX_LIBS_FOLDER = "libraries"
 MX_LIBS_DIR = ADDON_ROOT_DIR / MX_LIBS_FOLDER
 
-NODE_CLASSES_FOLDER = "node_classes"
+NODE_CLASSES_FOLDER = "materialx_nodes"
 NODE_CLASSES_DIR = ADDON_DATA_DIR / NODE_CLASSES_FOLDER
 
 
