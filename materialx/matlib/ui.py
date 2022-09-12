@@ -92,10 +92,6 @@ class MATLIB_PT_matlib(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
     bl_options = {'DEFAULT_CLOSED'}
 
-    # @classmethod
-    # def poll(cls, context):
-    #     return super().poll(context) and config.matlib_enabled
-
     def draw(self, context):
         layout = self.layout
         matlib_prop = context.window_manager.materialx.matlib
