@@ -19,7 +19,11 @@ ADDON_ROOT_DIR = Path(__file__).parent
 ADDON_DATA_DIR = Path(bpy.utils.user_resource("SCRIPTS", path=f"addons/{ADDON_PREFIX}", create=True))
 
 MX_LIBS_FOLDER = "libraries"
-MX_LIBS_DIR = ADDON_ROOT_DIR / "libraries"
+MX_LIBS_DIR = ADDON_ROOT_DIR / MX_LIBS_FOLDER
+
+NODE_CLASSES_FOLDER = "materialx_nodes"
+NODE_CLASSES_DIR = ADDON_DATA_DIR / NODE_CLASSES_FOLDER
+
 
 MATLIB_FOLDER = "matlib"
 MATLIB_DIR = ADDON_DATA_DIR / MATLIB_FOLDER
@@ -31,13 +35,13 @@ def with_prefix(name, separator='.', upper=False):
     return f"{ADDON_PREFIX.upper() if upper else ADDON_PREFIX}{separator}{name}"
 
 
-def title_str(str):
-    s = str.replace('_', ' ')
+def title_str(val):
+    s = val.replace('_', ' ')
     return s[:1].upper() + s[1:]
 
 
-def code_str(str):
-    return str.replace(' ', '_').replace('.', '_')
+def code_str(val):
+    return val.replace(' ', '_').replace('.', '_')
 
 
 def set_param_value(mx_param, val, nd_type, nd_output=None):
