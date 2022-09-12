@@ -6,14 +6,17 @@ from pathlib import Path
 
 import bpy
 import nodeitems_utils
+import sys
 
 from . import node, categories, generate_node_classes, ui
-from ..utils import with_prefix
+from ..utils import with_prefix, ADDON_DATA_DIR, NODE_CLASSES_DIR, NODE_CLASSES_FOLDER
 
+
+sys.path.append(str(ADDON_DATA_DIR))
 generate_node_classes.generate_basic_classes()
 
-gen_modules = [importlib.import_module(f"materialx.nodes.{f.name[:-len(f.suffix)]}")
-               for f in Path(__file__).parent.glob("gen_*.py")]
+gen_modules = [importlib.import_module(f"{NODE_CLASSES_FOLDER}.{f.name[:-len(f.suffix)]}")
+               for f in NODE_CLASSES_DIR.glob("gen_*.py")]
 
 mx_node_classes = []
 for mod in gen_modules:
