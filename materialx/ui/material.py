@@ -693,7 +693,7 @@ class MATERIAL_PT_tools(MATERIALX_Panel):
         layout.operator(MATERIAL_OP_convert_shader_to_mx.bl_idname, icon='FILE_TICK')
         layout.operator(MATERIAL_OP_export_mx_file.bl_idname, text="Export MaterialX to file", icon='EXPORT')
 
-
+# TODO add implementation
 # class MATERIAL_PT_dev(MATERIALX_ChildPanel):
 #     bl_label = "Dev"
 #     bl_parent_id = 'MATERIAL_PT_tools'

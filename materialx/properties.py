@@ -43,6 +43,7 @@ class MaterialProperties(bpy.types.PropertyGroup):
             return None
 
         return next((node for node in material.node_tree.nodes if
+                     # TODO add implementation
                      # node.bl_idname == ShaderNodeOutputMaterial.__name__ and
                      node.is_active_output), None)
 
@@ -58,6 +59,7 @@ class MaterialProperties(bpy.types.PropertyGroup):
 
         doc = mx.createDocument()
 
+        # TODO add implementation
         # node_parser = ShaderNodeOutputMaterial(doc, material, output_node, obj)
         # if not node_parser.export():
         #     return None
@@ -90,6 +92,7 @@ class MaterialProperties(bpy.types.PropertyGroup):
         else:
             doc = mx.createDocument()
 
+            # TODO add implementation
             # node_parser = ShaderNodeOutputMaterial(doc, mat, output_node, obj)
             # if not node_parser.export():
             #     return False
