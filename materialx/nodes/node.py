@@ -186,10 +186,7 @@ class MxNode(bpy.types.ShaderNode):
                 layout1.prop(self, self._input_prop_name(name))
 
     def draw_node_view(self, context, layout):
-        return
-
-        # TODO: enable implementation
-        from ...ui.material import USDHYDRA_MATERIAL_OP_invoke_popup_input_nodes
+        from ..ui.material import MATERIAL_OP_invoke_popup_input_nodes
         layout.use_property_split = True
         layout.use_property_decorate = True
         self.draw_buttons(context, layout)
@@ -228,7 +225,7 @@ class MxNode(bpy.types.ShaderNode):
                 box.scale_y = 0.5
                 box.emboss = 'NONE_OR_STATUS'
 
-                op = box.operator(USDHYDRA_MATERIAL_OP_invoke_popup_input_nodes.bl_idname, icon='HANDLETYPE_AUTO_CLAMP_VEC')
+                op = box.operator(MATERIAL_OP_invoke_popup_input_nodes.bl_idname, icon='HANDLETYPE_AUTO_CLAMP_VEC')
                 op.input_num = i
                 op.current_node_name = self.name
 
@@ -257,7 +254,7 @@ class MxNode(bpy.types.ShaderNode):
                     box.scale_x = 0.7
                     box.scale_y = 0.5
 
-                    op = box.operator(USDHYDRA_MATERIAL_OP_invoke_popup_input_nodes.bl_idname,
+                    op = box.operator(MATERIAL_OP_invoke_popup_input_nodes.bl_idname,
                                       icon='HANDLETYPE_AUTO_CLAMP_VEC')
                     op.input_num = i
                     op.current_node_name = self.name

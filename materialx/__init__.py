@@ -24,8 +24,10 @@ ADDON_PREFIX = "materialx"
 import bpy
 
 from . import preferences
+from . import properties
 from . import node_tree
 from . import nodes
+from . import ui
 
 from . import logging
 log = logging.Log("")
@@ -35,11 +37,15 @@ def register():
     log("register")
     bpy.utils.register_class(preferences.AddonPreferences)
     bpy.utils.register_class(node_tree.MxNodeTree)
+    properties.register()
     nodes.register()
+    ui.register()
 
 
 def unregister():
     log("unregister")
     nodes.unregister()
+    ui.unregister()
+    properties.unregister()
     bpy.utils.unregister_class(node_tree.MxNodeTree)
     bpy.utils.unregister_class(preferences.AddonPreferences)
