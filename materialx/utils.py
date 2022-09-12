@@ -24,6 +24,8 @@ MX_LIBS_DIR = ADDON_ROOT_DIR / MX_LIBS_FOLDER
 NODE_CLASSES_FOLDER = "materialx_nodes"
 NODE_CLASSES_DIR = ADDON_DATA_DIR / NODE_CLASSES_FOLDER
 
+MATLIB_FOLDER = "matlib"
+MATLIB_DIR = ADDON_DATA_DIR / MATLIB_FOLDER
 
 os.environ['MATERIALX_SEARCH_PATH'] = str(MX_LIBS_DIR)
 
@@ -378,3 +380,28 @@ def pass_node_reroute(link):
         link = link.from_node.inputs[0].links[0]
 
     return link if link.is_valid else None
+
+
+def update_ui(area_type='PROPERTIES', region_type='WINDOW'):
+    for window in bpy.context.window_manager.windows:
+        for area in window.screen.areas:
+            if area.type == area_type:
+                for region in area.regions:
+                    if region.type == region_type:
+                        region.tag_redraw()
+
+
+class MaterialXProperties(bpy.types.PropertyGroup):
+    bl_type = None
+
+    @classmethod
+    def register(cls):
+        setattr(cls.bl_type, "materialx", bpy.props.PointerProperty(
+            name="MaterialX properties",
+            description="MaterialX properties",
+            type=cls,
+        ))
+
+    @classmethod
+    def unregister(cls):
+        delattr(cls.bl_type, "materialx")
