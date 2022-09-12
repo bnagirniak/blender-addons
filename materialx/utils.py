@@ -386,3 +386,19 @@ def update_ui(area_type='PROPERTIES', region_type='WINDOW'):
                 for region in area.regions:
                     if region.type == region_type:
                         region.tag_redraw()
+
+
+class MaterialXProperties(bpy.types.PropertyGroup):
+    bl_type = None
+
+    @classmethod
+    def register(cls):
+        setattr(cls.bl_type, "materialx", bpy.props.PointerProperty(
+            name="MaterialX properties",
+            description="MaterialX properties",
+            type=cls,
+        ))
+
+    @classmethod
+    def unregister(cls):
+        delattr(cls.bl_type, "materialx")

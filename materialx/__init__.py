@@ -26,7 +26,6 @@ import bpy
 from . import preferences
 from . import node_tree
 from . import nodes
-from . import properties
 from . import matlib
 
 from . import logging
@@ -38,13 +37,11 @@ def register():
     bpy.utils.register_class(preferences.AddonPreferences)
     bpy.utils.register_class(node_tree.MxNodeTree)
     nodes.register()
-    properties.register()
     matlib.register()
 
 
 def unregister():
     log("unregister")
-    properties.unregister()
     matlib.unregister()
     nodes.unregister()
     bpy.utils.unregister_class(node_tree.MxNodeTree)
