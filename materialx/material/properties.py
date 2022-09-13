@@ -1,18 +1,16 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 # Copyright 2022, AMD
 
-import bpy
-import MaterialX as mx
 import traceback
 
+import bpy
+import MaterialX as mx
+
 from ..node_tree import MxNodeTree
-# from ..bl_nodes.nodes import ShaderNodeOutputMaterial
-# from ..usd_nodes import node_tree as usd_node_tree
-# from ..engine.viewport_engine import ViewportEngineScene
 from ..utils import MX_LIBS_DIR
 
 from ..utils import logging, get_temp_file, MaterialXProperties
-log = logging.Log('properties.material')
+log = logging.Log('material.properties')
 
 
 class MaterialProperties(MaterialXProperties):

@@ -19,7 +19,6 @@ class MATERIALX_ChildPanel(bpy.types.Panel):
 from . import (
     ui,
     properties
-    # world,
 )
 
 register_classes, unregister_classes = bpy.utils.register_classes_factory([
@@ -46,9 +45,7 @@ register_classes, unregister_classes = bpy.utils.register_classes_factory([
     ui.MATERIAL_OP_export_mx_file,
     ui.MATERIAL_OP_export_mx_console,
     ui.MATERIAL_PT_tools,
-    # material.MATERIAL_PT_dev,
-
-    # world.WORLD_PT_surface,
+    ui.MATERIAL_PT_dev,
 ])
 
 

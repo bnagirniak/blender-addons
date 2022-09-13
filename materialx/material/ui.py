@@ -1,22 +1,21 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 # Copyright 2022, AMD
 
+from pathlib import Path
+
 import MaterialX as mx
-import traceback
 
 import bpy
 from bpy_extras.io_utils import ExportHelper
 
-from pathlib import Path
 from . import MATERIALX_Panel, MATERIALX_ChildPanel
 from ..node_tree import MxNodeTree, NODE_LAYER_SEPARATION_WIDTH
 from ..nodes.node import is_mx_node_valid
 from .. import utils
 from ..utils import pass_node_reroute, title_str, mx_properties
 
-
 from ..utils import logging
-log = logging.Log(tag='ui.material')
+log = logging.Log(tag='material.ui')
 
 
 class MATERIAL_PT_context(MATERIALX_Panel):
@@ -690,21 +689,21 @@ class MATERIAL_PT_tools(MATERIALX_Panel):
         layout.operator(MATERIAL_OP_convert_shader_to_mx.bl_idname, icon='FILE_TICK')
         layout.operator(MATERIAL_OP_export_mx_file.bl_idname, text="Export MaterialX to file", icon='EXPORT')
 
-# TODO add implementation
-# class MATERIAL_PT_dev(MATERIALX_ChildPanel):
-#     bl_label = "Dev"
-#     bl_parent_id = 'MATERIAL_PT_tools'
-#     bl_space_type = "NODE_EDITOR"
-#     bl_region_type = "UI"
-#
-#     @classmethod
-#     def poll(cls, context):
-#         return config.show_dev_settings
-#
-#     def draw(self, context):
-#         layout = self.layout
-#
-#         layout.operator(MATERIAL_OP_export_mx_console.bl_idname)
+
+class MATERIAL_PT_dev(MATERIALX_ChildPanel):
+    bl_label = "Dev"
+    bl_parent_id = 'MATERIAL_PT_tools'
+    bl_space_type = "NODE_EDITOR"
+    bl_region_type = "UI"
+
+    @classmethod
+    def poll(cls, context):
+        return config.show_dev_settings
+
+    def draw(self, context):
+        layout = self.layout
+
+        layout.operator(MATERIAL_OP_export_mx_console.bl_idname)
 
 
 def depsgraph_update(depsgraph):
