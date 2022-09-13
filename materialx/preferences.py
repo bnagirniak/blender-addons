@@ -3,12 +3,11 @@
 
 import bpy
 
-from .utils import with_prefix
 from . import logging, ADDON_ALIAS
 
 
 class AddonPreferences(bpy.types.AddonPreferences):
-    bl_idname = with_prefix('AddonPreferences', '_', True)
+    bl_idname = ADDON_ALIAS
 
     def update_log_level(self, context):
         logging.logger.setLevel(self.log_level)
