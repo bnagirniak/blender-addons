@@ -11,6 +11,7 @@ from bpy_extras.io_utils import ImportHelper, ExportHelper
 
 from ..node_tree import MxNodeTree
 from .. import utils
+from ..preferences import addon_preferences
 
 from ..utils import logging
 log = logging.Log('nodes.ui')
@@ -194,9 +195,7 @@ class NODES_PT_dev(bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
-        # TODO: enable
-        # return config.show_dev_settings
-        return True
+        return addon_preferences().dev_tools
 
     def draw(self, context):
         layout = self.layout

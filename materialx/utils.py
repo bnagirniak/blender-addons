@@ -16,7 +16,7 @@ log = logging.Log('utils')
 
 
 ADDON_ROOT_DIR = Path(__file__).parent
-ADDON_DATA_DIR = Path(bpy.utils.user_resource("SCRIPTS", path=f"addons/{ADDON_ALIAS}", create=True))
+ADDON_DATA_DIR = Path(bpy.utils.user_resource("SCRIPTS", path=f"addons/{ADDON_ALIAS}_data", create=True))
 
 MX_LIBS_FOLDER = "libraries"
 MX_LIBS_DIR = ADDON_ROOT_DIR / MX_LIBS_FOLDER
