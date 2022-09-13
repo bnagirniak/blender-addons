@@ -18,7 +18,7 @@ bl_info = {
     "category": "Material",
 }
 
-ADDON_PREFIX = "materialx"
+ADDON_ALIAS = "materialx"
 
 
 import bpy

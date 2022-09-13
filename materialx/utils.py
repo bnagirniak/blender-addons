@@ -9,14 +9,14 @@ import shutil
 import MaterialX as mx
 import bpy
 
-from . import ADDON_PREFIX
+from . import ADDON_ALIAS
 
 from . import logging
 log = logging.Log('utils')
 
 
 ADDON_ROOT_DIR = Path(__file__).parent
-ADDON_DATA_DIR = Path(bpy.utils.user_resource("SCRIPTS", path=f"addons/{ADDON_PREFIX}", create=True))
+ADDON_DATA_DIR = Path(bpy.utils.user_resource("SCRIPTS", path=f"addons/{ADDON_ALIAS}", create=True))
 
 MX_LIBS_FOLDER = "libraries"
 MX_LIBS_DIR = ADDON_ROOT_DIR / MX_LIBS_FOLDER
@@ -31,7 +31,7 @@ os.environ['MATERIALX_SEARCH_PATH'] = str(MX_LIBS_DIR)
 
 
 def with_prefix(name, separator='.', upper=False):
-    return f"{ADDON_PREFIX.upper() if upper else ADDON_PREFIX}{separator}{name}"
+    return f"{ADDON_ALIAS.upper() if upper else ADDON_ALIAS}{separator}{name}"
 
 
 def title_str(val):
@@ -396,7 +396,7 @@ class MaterialXProperties(bpy.types.PropertyGroup):
 
     @classmethod
     def register(cls):
-        setattr(cls.bl_type, "materialx", bpy.props.PointerProperty(
+        setattr(cls.bl_type, ADDON_ALIAS, bpy.props.PointerProperty(
             name="MaterialX properties",
             description="MaterialX properties",
             type=cls,
@@ -404,4 +404,8 @@ class MaterialXProperties(bpy.types.PropertyGroup):
 
     @classmethod
     def unregister(cls):
-        delattr(cls.bl_type, "materialx")
+        delattr(cls.bl_type, ADDON_ALIAS)
+
+
+def mx_properties(obj):
+    return getattr(obj, ADDON_ALIAS)
