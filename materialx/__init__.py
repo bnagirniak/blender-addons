@@ -35,10 +35,16 @@ from . import logging
 log = logging.Log("__init__")
 
 
+register_classes, unregister_classes = bpy.utils.register_classes_factory([
+    node_tree.MxNodeTree,
+    preferences.AddonPreferences,
+])
+
+
 def register():
     log("register")
-    bpy.utils.register_class(preferences.AddonPreferences)
-    bpy.utils.register_class(node_tree.MxNodeTree)
+
+    register_classes()
     nodes.register()
     matlib.register()
     material.register()
@@ -46,8 +52,8 @@ def register():
 
 def unregister():
     log("unregister")
+
+    material.unregister()
     matlib.unregister()
     nodes.unregister()
-    material.unregister()
-    bpy.utils.unregister_class(node_tree.MxNodeTree)
-    bpy.utils.unregister_class(preferences.AddonPreferences)
+    unregister_classes()
