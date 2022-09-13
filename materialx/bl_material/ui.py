@@ -90,7 +90,7 @@ class MATERIAL_PT_preview(MATERIALX_Panel):
 
     @classmethod
     def poll(cls, context):
-        return context.material # and super().poll(context)
+        return context.material
 
     def draw(self, context):
         self.layout.template_preview(context.material)
@@ -195,7 +195,7 @@ class MATERIAL_PT_material(MATERIALX_Panel):
 
     @classmethod
     def poll(cls, context):
-        return context.material # and super().poll(context)
+        return context.material
 
     def draw(self, context):
         mat_materialx = mx_properties(context.material)
@@ -541,7 +541,6 @@ class MATERIAL_PT_output_node(MATERIALX_ChildPanel):
 
     @classmethod
     def poll(cls, context):
-        # print(dir(context.material))
         return not bool(mx_properties(context.material).mx_node_tree)
 
     def draw(self, context):
@@ -682,10 +681,8 @@ class MATERIAL_PT_tools(MATERIALX_Panel):
     @classmethod
     def poll(cls, context):
         tree = context.space_data.edit_tree
-        return tree and tree.bl_idname == bpy.types.ShaderNodeTree.__name__
 
-        # return super().poll(context) and tree and \
-        #        tree.bl_idname == bpy.types.ShaderNodeTree.__name__
+        return tree and tree.bl_idname == bpy.types.ShaderNodeTree.__name__
 
     def draw(self, context):
         layout = self.layout
