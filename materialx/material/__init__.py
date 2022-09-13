@@ -50,12 +50,10 @@ register_classes, unregister_classes = bpy.utils.register_classes_factory([
 
 
 def register():
-    ui.register()
     properties.register()
     register_classes()
 
 
 def unregister():
-    ui.unregister()
     properties.unregister()
     unregister_classes()

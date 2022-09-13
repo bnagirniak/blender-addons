@@ -7,6 +7,7 @@ import bpy
 import MaterialX as mx
 
 from ..node_tree import MxNodeTree
+from ..bl_nodes.nodes import ShaderNodeOutputMaterial
 from ..utils import MX_LIBS_DIR
 
 from ..utils import logging, get_temp_file, MaterialXProperties
@@ -45,10 +46,9 @@ class MaterialProperties(MaterialXProperties):
 
         doc = mx.createDocument()
 
-        # TODO add implementation
-        # node_parser = ShaderNodeOutputMaterial(doc, material, output_node, obj)
-        # if not node_parser.export():
-        #     return None
+        node_parser = ShaderNodeOutputMaterial(doc, material, output_node, obj)
+        if not node_parser.export():
+            return None
 
         return doc
 
@@ -78,10 +78,9 @@ class MaterialProperties(MaterialXProperties):
         else:
             doc = mx.createDocument()
 
-            # TODO add implementation
-            # node_parser = ShaderNodeOutputMaterial(doc, mat, output_node, obj)
-            # if not node_parser.export():
-            #     return False
+            node_parser = ShaderNodeOutputMaterial(doc, mat, output_node, obj)
+            if not node_parser.export():
+                return False
 
         if not doc:
             log.warn("Incorrect node tree to export", mx_node_tree)

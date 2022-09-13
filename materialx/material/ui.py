@@ -12,6 +12,7 @@ from . import MATERIALX_Panel, MATERIALX_ChildPanel
 from ..node_tree import MxNodeTree, NODE_LAYER_SEPARATION_WIDTH
 from ..nodes.node import is_mx_node_valid
 from .. import utils
+from ..preferences import addon_preferences
 from ..utils import pass_node_reroute, title_str, mx_properties
 
 from ..utils import logging
@@ -698,7 +699,7 @@ class MATERIAL_PT_dev(MATERIALX_ChildPanel):
 
     @classmethod
     def poll(cls, context):
-        return config.show_dev_settings
+        return addon_preferences().dev_tools
 
     def draw(self, context):
         layout = self.layout
@@ -716,8 +717,6 @@ def depsgraph_update(depsgraph):
     screen = context.screen
     if not hasattr(screen, 'areas'):
         return
-
-    bpy.types.NODE_HT_header.remove(update_material_ui)
 
     for window in context.window_manager.windows:
         for area in window.screen.areas:
@@ -739,36 +738,3 @@ def depsgraph_update(depsgraph):
             space.node_tree = mx_node_tree
 
             mx_node_tree.update_links()
-
-    bpy.types.NODE_HT_header.append(update_material_ui)
-
-
-# update for material ui according to MaterialX nodetree header changes
-def update_material_ui(self, context):
-    obj = context.active_object
-    if not obj:
-        return
-
-    mat = obj.active_material
-    if not mat:
-        return
-
-    space = context.space_data
-    if space.tree_type != utils.with_prefix('MxNodeTree'):
-        return
-
-    ui_mx_node_tree = mx_properties(mat).mx_node_tree
-    editor_node_tree = space.node_tree
-
-    if editor_node_tree != ui_mx_node_tree and not space.pin and editor_node_tree:
-        mx_properties(mat).mx_node_tree = editor_node_tree
-
-
-def register():
-    # set update for material ui according to MaterialX nodetree header changes
-    bpy.types.NODE_HT_header.append(update_material_ui)
-
-
-def unregister():
-    # remove update for material ui according to MaterialX nodetree header changes
-    bpy.types.NODE_HT_header.remove(update_material_ui)
