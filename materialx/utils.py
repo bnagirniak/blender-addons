@@ -15,7 +15,6 @@ from . import logging
 log = logging.Log('utils')
 
 
-BLENDER_VERSION = f'{bpy.app.version[0]}.{bpy.app.version[1]}'
 ADDON_ROOT_DIR = Path(__file__).parent
 MX_LIBS_FOLDER = "libraries"
 MX_LIBS_DIR = ADDON_ROOT_DIR / "libraries"

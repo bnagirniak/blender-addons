@@ -27,7 +27,7 @@ from . import preferences
 from . import properties
 from . import node_tree
 from . import nodes
-from . import ui
+from . import bl_material
 
 from . import logging
 log = logging.Log("")
@@ -39,13 +39,13 @@ def register():
     bpy.utils.register_class(node_tree.MxNodeTree)
     properties.register()
     nodes.register()
-    ui.register()
+    bl_material.register()
 
 
 def unregister():
     log("unregister")
     nodes.unregister()
-    ui.unregister()
+    bl_material.unregister()
     properties.unregister()
     bpy.utils.unregister_class(node_tree.MxNodeTree)
     bpy.utils.unregister_class(preferences.AddonPreferences)

@@ -12,7 +12,7 @@ from . import MATERIALX_Panel, MATERIALX_ChildPanel
 from ..node_tree import MxNodeTree, NODE_LAYER_SEPARATION_WIDTH
 from ..nodes.node import is_mx_node_valid
 from .. import utils
-from ..utils import pass_node_reroute, title_str, BLENDER_VERSION
+from ..utils import pass_node_reroute, title_str
 
 
 from ..utils import logging
@@ -749,9 +749,6 @@ def depsgraph_update(depsgraph):
 
 # update for material ui according to MaterialX nodetree header changes
 def update_material_ui(self, context):
-    if BLENDER_VERSION >= '3.0':
-        return
-
     obj = context.active_object
     if not obj:
         return
