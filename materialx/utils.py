@@ -53,6 +53,10 @@ class MaterialXProperties(bpy.types.PropertyGroup):
         delattr(cls.bl_type, ADDON_ALIAS)
 
 
+def mx_properties(obj):
+    return getattr(obj, ADDON_ALIAS)
+
+
 def with_prefix(name, separator='.', upper=False):
     return f"{ADDON_ALIAS.upper() if upper else ADDON_ALIAS}{separator}{name}"
 
@@ -412,26 +416,6 @@ def update_ui(area_type='PROPERTIES', region_type='WINDOW'):
                 for region in area.regions:
                     if region.type == region_type:
                         region.tag_redraw()
-
-
-class MaterialXProperties(bpy.types.PropertyGroup):
-    bl_type = None
-
-    @classmethod
-    def register(cls):
-        setattr(cls.bl_type, ADDON_ALIAS, bpy.props.PointerProperty(
-            name="MaterialX properties",
-            description="MaterialX properties",
-            type=cls,
-        ))
-
-    @classmethod
-    def unregister(cls):
-        delattr(cls.bl_type, ADDON_ALIAS)
-
-
-def mx_properties(obj):
-    return getattr(obj, ADDON_ALIAS)
 
 
 def cache_image_file(image: bpy.types.Image, cache_check=True):
