@@ -7,6 +7,7 @@ from collections import defaultdict
 import MaterialX as mx
 
 from .. import utils
+from .. import ADDON_ALIAS
 
 from .. import logging
 log = logging.Log("nodes.generate_node_classes")
@@ -273,10 +274,10 @@ from bpy.props import (
     PointerProperty,
     FloatVectorProperty,
 ) 
-from .node import MxNode
+from {ADDON_ALIAS}.nodes.node import MxNode
 
 
-FILE_PATH = r"{file_path.relative_to(utils.ADDON_ROOT_DIR)}"
+FILE_PATH = r"{file_path}"
 """)
 
     doc = mx.createDocument()
@@ -311,7 +312,8 @@ mx_node_classes = [{', '.join(mx_node_class_names)}]
 
 
 def generate_basic_classes():
-    gen_code_dir = utils.ADDON_ROOT_DIR / "nodes"
+    gen_code_dir = utils.NODE_CLASSES_DIR
+    gen_code_dir.mkdir(exist_ok=True)
 
     files = [
         ('PBR', "PBR", utils.MX_LIBS_DIR / "bxdf/standard_surface.mtlx"),
@@ -332,3 +334,9 @@ def generate_basic_classes():
         log(f"Generating {module_file} from {file_path}")
         module_code = generate_classes_code(file_path, prefix, category)
         module_file.write_text(module_code)
+
+    module_file = gen_code_dir / "__init__.py"
+    module_file.write_text(
+"""# Automatically generated classes for MaterialX nodes.
+# Do not edit manually, changes will be overwritten.
+""")

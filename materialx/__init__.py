@@ -18,15 +18,16 @@ bl_info = {
     "category": "Material",
 }
 
-ADDON_PREFIX = "materialx"
+ADDON_ALIAS = "materialx"
 
 
 import bpy
 
 from . import preferences
-from . import properties
+from .bl_material import properties
 from . import node_tree
 from . import nodes
+from . import matlib
 from . import bl_material
 
 from . import logging
@@ -39,11 +40,13 @@ def register():
     bpy.utils.register_class(node_tree.MxNodeTree)
     properties.register()
     nodes.register()
+    matlib.register()
     bl_material.register()
 
 
 def unregister():
     log("unregister")
+    matlib.unregister()
     nodes.unregister()
     bl_material.unregister()
     properties.unregister()

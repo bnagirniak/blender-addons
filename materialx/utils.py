@@ -9,30 +9,38 @@ import shutil
 import MaterialX as mx
 import bpy
 
-from . import ADDON_PREFIX
+from . import ADDON_ALIAS
 
 from . import logging
 log = logging.Log('utils')
 
 
 ADDON_ROOT_DIR = Path(__file__).parent
+ADDON_DATA_DIR = Path(bpy.utils.user_resource("SCRIPTS", path=f"addons/{ADDON_ALIAS}", create=True))
+
 MX_LIBS_FOLDER = "libraries"
-MX_LIBS_DIR = ADDON_ROOT_DIR / "libraries"
+MX_LIBS_DIR = ADDON_ROOT_DIR / MX_LIBS_FOLDER
+
+NODE_CLASSES_FOLDER = "materialx_nodes"
+NODE_CLASSES_DIR = ADDON_DATA_DIR / NODE_CLASSES_FOLDER
+
+MATLIB_FOLDER = "matlib"
+MATLIB_DIR = ADDON_DATA_DIR / MATLIB_FOLDER
 
 os.environ['MATERIALX_SEARCH_PATH'] = str(MX_LIBS_DIR)
 
 
 def with_prefix(name, separator='.', upper=False):
-    return f"{ADDON_PREFIX.upper() if upper else ADDON_PREFIX}{separator}{name}"
+    return f"{ADDON_ALIAS.upper() if upper else ADDON_ALIAS}{separator}{name}"
 
 
-def title_str(str):
-    s = str.replace('_', ' ')
+def title_str(val):
+    s = val.replace('_', ' ')
     return s[:1].upper() + s[1:]
 
 
-def code_str(str):
-    return str.replace(' ', '_').replace('.', '_')
+def code_str(val):
+    return val.replace(' ', '_').replace('.', '_')
 
 
 def set_param_value(mx_param, val, nd_type, nd_output=None):
@@ -372,3 +380,32 @@ def pass_node_reroute(link):
         link = link.from_node.inputs[0].links[0]
 
     return link if link.is_valid else None
+
+
+def update_ui(area_type='PROPERTIES', region_type='WINDOW'):
+    for window in bpy.context.window_manager.windows:
+        for area in window.screen.areas:
+            if area.type == area_type:
+                for region in area.regions:
+                    if region.type == region_type:
+                        region.tag_redraw()
+
+
+class MaterialXProperties(bpy.types.PropertyGroup):
+    bl_type = None
+
+    @classmethod
+    def register(cls):
+        setattr(cls.bl_type, ADDON_ALIAS, bpy.props.PointerProperty(
+            name="MaterialX properties",
+            description="MaterialX properties",
+            type=cls,
+        ))
+
+    @classmethod
+    def unregister(cls):
+        delattr(cls.bl_type, ADDON_ALIAS)
+
+
+def mx_properties(obj):
+    return getattr(obj, ADDON_ALIAS)

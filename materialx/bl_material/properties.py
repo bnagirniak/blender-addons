@@ -5,30 +5,18 @@ import bpy
 import MaterialX as mx
 import traceback
 
-from .node_tree import MxNodeTree
+from ..node_tree import MxNodeTree
 # from ..bl_nodes.nodes import ShaderNodeOutputMaterial
 # from ..usd_nodes import node_tree as usd_node_tree
 # from ..engine.viewport_engine import ViewportEngineScene
-from .utils import MX_LIBS_DIR
+from ..utils import MX_LIBS_DIR
 
-from .utils import logging, get_temp_file
+from ..utils import logging, get_temp_file, MaterialXProperties
 log = logging.Log('properties.material')
 
 
-class MaterialProperties(bpy.types.PropertyGroup):
+class MaterialProperties(MaterialXProperties):
     bl_type = bpy.types.Material
-
-    @classmethod
-    def register(cls):
-        cls.bl_type.materialx = bpy.props.PointerProperty(
-            name="MaterialX properties",
-            description="MaterialX properties",
-            type=cls,
-        )
-
-    @classmethod
-    def unregister(cls):
-        del cls.bl_type.hdusd
 
     def update_mx_node_tree(self, context):
         self.update()

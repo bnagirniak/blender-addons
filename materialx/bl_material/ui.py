@@ -12,7 +12,7 @@ from . import MATERIALX_Panel, MATERIALX_ChildPanel
 from ..node_tree import MxNodeTree, NODE_LAYER_SEPARATION_WIDTH
 from ..nodes.node import is_mx_node_valid
 from .. import utils
-from ..utils import pass_node_reroute, title_str
+from ..utils import pass_node_reroute, title_str, mx_properties
 
 
 from ..utils import logging
@@ -29,7 +29,7 @@ class MATERIAL_PT_context(MATERIALX_Panel):
         if context.active_object and context.active_object.type == 'GPENCIL':
             return False
         else:
-            return (context.material or context.object) # and super().poll(context)
+            return context.material or context.object
 
     def draw(self, context):
         layout = self.layout
@@ -106,7 +106,7 @@ class MATERIAL_OP_new_mx_node_tree(bpy.types.Operator):
         mx_node_tree = bpy.data.node_groups.new(f"MX_{mat.name}", type=MxNodeTree.bl_idname)
         mx_node_tree.create_basic_nodes()
 
-        mat.materialx.mx_node_tree = mx_node_tree
+        mx_properties(mat).mx_node_tree = mx_node_tree
         return {"FINISHED"}
 
 
@@ -128,10 +128,10 @@ class MATERIAL_OP_duplicate_mx_node_tree(bpy.types.Operator):
 
     def execute(self, context):
         mat = context.object.active_material
-        mx_node_tree = mat.materialx.mx_node_tree
+        mx_node_tree = mx_properties(mat).mx_node_tree
 
         if mx_node_tree:
-            mat.materialx.mx_node_tree = mx_node_tree.copy()
+            mx_properties(mat).mx_node_tree = mx_node_tree.copy()
 
         return {"FINISHED"}
 
@@ -142,7 +142,7 @@ class MATERIAL_OP_convert_shader_to_mx(bpy.types.Operator):
     bl_label = "Convert to MaterialX"
 
     def execute(self, context):
-        if not context.material.materialx.convert_shader_to_mx(context.object):
+        if not mx_properties(context.material).convert_shader_to_mx(context.object):
             return {'CANCELLED'}
 
         return {"FINISHED"}
@@ -156,7 +156,7 @@ class MATERIAL_OP_link_mx_node_tree(bpy.types.Operator):
     mx_node_tree_name: bpy.props.StringProperty(default="")
 
     def execute(self, context):
-        context.material.materialx.mx_node_tree = bpy.data.node_groups[self.mx_node_tree_name]
+        mx_properties(context.material).mx_node_tree = bpy.data.node_groups[self.mx_node_tree_name]
         return {"FINISHED"}
 
 
@@ -166,7 +166,7 @@ class MATERIAL_OP_unlink_mx_node_tree(bpy.types.Operator):
     bl_label = ""
 
     def execute(self, context):
-        context.material.materialx.mx_node_tree = None
+        mx_properties(context.material).mx_node_tree = None
         return {"FINISHED"}
 
 
@@ -198,7 +198,7 @@ class MATERIAL_PT_material(MATERIALX_Panel):
         return context.material # and super().poll(context)
 
     def draw(self, context):
-        mat_materialx = context.material.materialx
+        mat_materialx = mx_properties(context.material)
         layout = self.layout
 
         split = layout.row(align=True).split(factor=0.4)
@@ -236,8 +236,8 @@ class MATERIAL_OP_link_mx_node(bpy.types.Operator):
     def execute(self, context):
         layout = self.layout
 
-        node_tree = context.material.materialx.mx_node_tree
-        current_node = context.material.materialx.mx_node_tree.nodes[self.current_node_name]
+        node_tree = mx_properties(context.material).mx_node_tree
+        current_node = mx_properties(context.material).mx_node_tree.nodes[self.current_node_name]
 
         input = current_node.inputs[self.input_num]
         link = next((link for link in input.links), None) if input.is_linked else None
@@ -302,7 +302,7 @@ class MATERIAL_OP_invoke_popup_input_nodes(bpy.types.Operator):
             op.current_node_name = self.current_node_name
             i += 1
 
-        input = context.material.materialx.mx_node_tree.nodes[self.current_node_name].inputs[self.input_num]
+        input = mx_properties(context.material).mx_node_tree.nodes[self.current_node_name].inputs[self.input_num]
         if input.is_linked:
             link = input.links[0]
 
@@ -344,7 +344,7 @@ class MATERIAL_OP_invoke_popup_shader_nodes(bpy.types.Operator):
         col.emboss = 'PULLDOWN_MENU'
         col.label(text="PBR", icon='NODE')
 
-        output_node = context.material.materialx.mx_node_tree.output_node
+        output_node = mx_properties(context.material).mx_node_tree.output_node
         for cls in mx_node_classes:
             if cls.category != "PBR":
                 continue
@@ -389,10 +389,10 @@ class MATERIAL_OP_remove_node(bpy.types.Operator):
                 for link in input.links:
                     self.remove_nodes(context, link.from_node)
 
-        context.material.materialx.mx_node_tree.nodes.remove(node)
+        mx_properties(context.material).mx_node_tree.nodes.remove(node)
 
     def execute(self, context):
-        node_tree = context.material.materialx.mx_node_tree
+        node_tree = mx_properties(context.material).mx_node_tree
         input_node = node_tree.nodes[self.input_node_name]
 
         self.remove_nodes(context, input_node)
@@ -409,7 +409,7 @@ class MATERIAL_OP_disconnect_node(bpy.types.Operator):
     input_num: bpy.props.IntProperty()
 
     def execute(self, context):
-        node_tree = context.material.materialx.mx_node_tree
+        node_tree = mx_properties(context.material).mx_node_tree
         output_node = node_tree.nodes[self.output_node_name]
 
         links = output_node.inputs[self.input_num].links
@@ -426,12 +426,12 @@ class MATERIAL_PT_material_settings_surface(MATERIALX_ChildPanel):
 
     @classmethod
     def poll(cls, context):
-        return bool(context.material.materialx.mx_node_tree)
+        return bool(mx_properties(context.material).mx_node_tree)
 
     def draw(self, context):
         layout = self.layout
 
-        node_tree = context.material.materialx.mx_node_tree
+        node_tree = mx_properties(context.material).mx_node_tree
         output_node = node_tree.output_node
         if not output_node:
             layout.label(text="No output node")
@@ -483,12 +483,12 @@ class MATERIAL_PT_material_settings_displacement(MATERIALX_ChildPanel):
 
     @classmethod
     def poll(cls, context):
-        return bool(context.material.materialx.mx_node_tree)
+        return bool(mx_properties(context.material).mx_node_tree)
 
     def draw(self, context):
         layout = self.layout
 
-        node_tree = context.material.materialx.mx_node_tree
+        node_tree = mx_properties(context.material).mx_node_tree
         output_node = node_tree.output_node
         if not output_node:
             layout.label(text="No output node")
@@ -542,14 +542,14 @@ class MATERIAL_PT_output_node(MATERIALX_ChildPanel):
     @classmethod
     def poll(cls, context):
         # print(dir(context.material))
-        return not bool(context.material.materialx.mx_node_tree)
+        return not bool(mx_properties(context.material).mx_node_tree)
 
     def draw(self, context):
         layout = self.layout
 
         node_tree = context.material.node_tree
 
-        output_node = context.material.materialx.output_node
+        output_node = mx_properties(context.material).output_node
         if not output_node:
             layout.label(text="No output node")
             return
@@ -624,12 +624,12 @@ class MATERIAL_OP_export_mx_file(bpy.types.Operator, ExportHelper):
     # endregion
 
     def execute(self, context):
-        materialx_prop = context.material.materialx
+        materialx_prop = mx_properties(context.material)
 
         if not materialx_prop.convert_shader_to_mx():
             return {'CANCELLED'}
 
-        doc = context.material.materialx.export(None)
+        doc = mx_properties(context.material).export(None)
         if not doc:
             return {'CANCELLED'}
 
@@ -665,7 +665,7 @@ class MATERIAL_OP_export_mx_console(bpy.types.Operator):
     bl_description = "Export material as MaterialX node tree to console"
 
     def execute(self, context):
-        doc = context.material.materialx.export(context.object)
+        doc = mx_properties(context.material).export(context.object)
         if not doc:
             return {'CANCELLED'}
 
@@ -714,7 +714,7 @@ def depsgraph_update(depsgraph):
     context = bpy.context
     mx_node_tree = None
     if hasattr(context, 'object') and context.object and context.object.active_material:
-        mx_node_tree = context.object.active_material.materialx.mx_node_tree
+        mx_node_tree = mx_properties(context.object.active_material).mx_node_tree
 
     # trying to show MaterialX area with node tree or Shader area
     screen = context.screen
@@ -761,11 +761,11 @@ def update_material_ui(self, context):
     if space.tree_type != utils.with_prefix('MxNodeTree'):
         return
 
-    ui_mx_node_tree = mat.materialx.mx_node_tree
+    ui_mx_node_tree = mx_properties(mat).mx_node_tree
     editor_node_tree = space.node_tree
 
     if editor_node_tree != ui_mx_node_tree and not space.pin and editor_node_tree:
-        mat.materialx.mx_node_tree = editor_node_tree
+        mx_properties(mat).mx_node_tree = editor_node_tree
 
 
 def register():
