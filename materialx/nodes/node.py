@@ -186,7 +186,7 @@ class MxNode(bpy.types.ShaderNode):
                 layout1.prop(self, self._input_prop_name(name))
 
     def draw_node_view(self, context, layout):
-        from materialx.ui import MATERIAL_OP_invoke_popup_input_nodes
+        from ..bl_material.ui import MATERIAL_OP_invoke_popup_input_nodes
         layout.use_property_split = True
         layout.use_property_decorate = True
         self.draw_buttons(context, layout)
