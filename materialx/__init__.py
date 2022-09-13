@@ -23,13 +23,16 @@ ADDON_ALIAS = "materialx"
 
 import bpy
 
-from . import preferences
-from . import node_tree
-from . import nodes
-from . import matlib
+from . import (
+    preferences,
+    node_tree,
+    nodes,
+    matlib,
+    material,
+)
 
 from . import logging
-log = logging.Log("")
+log = logging.Log("__init__")
 
 
 def register():
@@ -38,11 +41,13 @@ def register():
     bpy.utils.register_class(node_tree.MxNodeTree)
     nodes.register()
     matlib.register()
+    material.register()
 
 
 def unregister():
     log("unregister")
     matlib.unregister()
     nodes.unregister()
+    material.unregister()
     bpy.utils.unregister_class(node_tree.MxNodeTree)
     bpy.utils.unregister_class(preferences.AddonPreferences)
