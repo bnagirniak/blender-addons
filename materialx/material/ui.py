@@ -341,12 +341,13 @@ class MATERIAL_OP_disconnect_node(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class MATERIAL_PT_materialx_surfaceshader(bpy.types.Panel):
-    bl_idname = utils.with_prefix('MATERIAL_PT_materialx_surfaceshader', '_', True)
-    bl_label = "surfaceshader"
+class MATERIAL_PT_materialx_output(bpy.types.Panel):
+    bl_label = ""
     bl_parent_id = MATERIAL_PT_materialx.bl_idname
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
+
+    out_key = ""
 
     @classmethod
     def poll(cls, context):
@@ -361,7 +362,7 @@ class MATERIAL_PT_materialx_surfaceshader(bpy.types.Panel):
             layout.label(text="No output node")
             return
 
-        input = output_node.inputs[self.bl_label]
+        input = output_node.inputs[self.out_key]
         link = next((link for link in input.links if link.is_valid), None)
 
         split = layout.split(factor=0.4)
@@ -374,7 +375,7 @@ class MATERIAL_PT_materialx_surfaceshader(bpy.types.Panel):
         box.scale_x = 0.7
         box.scale_y = 0.5
         op = box.operator(MATERIAL_OP_invoke_popup_shader_nodes.bl_idname, icon='HANDLETYPE_AUTO_CLAMP_VEC')
-        op.input_num = output_node.inputs.find(self.bl_label)
+        op.input_num = output_node.inputs.find(self.out_key)
 
         if link and is_mx_node_valid(link.from_node):
             row.prop(link.from_node, 'name', text="")
@@ -400,64 +401,16 @@ class MATERIAL_PT_materialx_surfaceshader(bpy.types.Panel):
         link.from_node.draw_node_view(context, layout)
 
 
-class MATERIAL_PT_materialx_displacementshader(bpy.types.Panel):
-    bl_idname = utils.with_prefix('MATERIAL_PT_materialx_displacementshader', '_', True)
-    bl_label = "displacementshader"
-    bl_parent_id = MATERIAL_PT_materialx.bl_idname
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
+class MATERIAL_PT_materialx_surfaceshader(MATERIAL_PT_materialx_output):
+    bl_idname = utils.with_prefix('MATERIAL_PT_materialx_surfaceshader', '_', True)
+    bl_label = "Surface Shader"
+    out_key = 'surfaceshader'
 
-    @classmethod
-    def poll(cls, context):
-        return bool(mx_properties(context.material).mx_node_tree)
 
-    def draw(self, context):
-        layout = self.layout
-
-        node_tree = mx_properties(context.material).mx_node_tree
-        output_node = node_tree.output_node
-        if not output_node:
-            layout.label(text="No output node")
-            return
-
-        input = output_node.inputs[self.bl_label]
-        link = next((link for link in input.links if link.is_valid), None)
-
-        split = layout.split(factor=0.4)
-        row = split.row(align=True)
-        row.alignment = 'RIGHT'
-        row.label(text='Displacement')
-
-        row = split.row(align=True)
-        box = row.box()
-        box.scale_x = 0.7
-        box.scale_y = 0.5
-        op = box.operator(MATERIAL_OP_invoke_popup_shader_nodes.bl_idname, icon='HANDLETYPE_AUTO_CLAMP_VEC')
-        op.input_num = output_node.inputs.find(self.bl_label)
-
-        if link and is_mx_node_valid(link.from_node):
-            row.prop(link.from_node, 'name', text="")
-        else:
-            box = row.box()
-            box.scale_y = 0.5
-            box.label(text='None')
-
-        row.label(icon='BLANK1')
-
-        if not link:
-            return
-
-        if not is_mx_node_valid(link.from_node):
-            layout.label(text="Unsupported node")
-            return
-
-        link = pass_node_reroute(link)
-        if not link:
-            return
-
-        layout.separator()
-
-        link.from_node.draw_node_view(context, layout)
+class MATERIAL_PT_materialx_displacementshader(MATERIAL_PT_materialx_output):
+    bl_idname = utils.with_prefix('MATERIAL_PT_materialx_sdisplacementshader', '_', True)
+    bl_label = "Displacement Shader"
+    out_key = 'displacementshader'
 
 
 class MATERIAL_OP_export_mx_file(bpy.types.Operator, ExportHelper):
