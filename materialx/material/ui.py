@@ -126,12 +126,7 @@ class MATERIAL_PT_materialx(bpy.types.Panel):
         mat_materialx = mx_properties(context.material)
         layout = self.layout
 
-        split = layout.row(align=True).split(factor=0.4)
-        row = split.column()
-        row.alignment = 'RIGHT'
-        row.label(text="MaterialX")
-        row = split.row()
-        row = row.row(align=True)
+        row = layout.row(align=True)
         row.menu(MATERIAL_MT_mx_node_tree.bl_idname, text="", icon='MATERIAL')
 
         if mat_materialx.mx_node_tree:
@@ -404,12 +399,15 @@ class MATERIAL_PT_materialx_output(bpy.types.Panel):
 class MATERIAL_PT_materialx_surfaceshader(MATERIAL_PT_materialx_output):
     bl_idname = utils.with_prefix('MATERIAL_PT_materialx_surfaceshader', '_', True)
     bl_label = "Surface Shader"
+
     out_key = 'surfaceshader'
 
 
 class MATERIAL_PT_materialx_displacementshader(MATERIAL_PT_materialx_output):
     bl_idname = utils.with_prefix('MATERIAL_PT_materialx_sdisplacementshader', '_', True)
     bl_label = "Displacement Shader"
+    bl_options = {'DEFAULT_CLOSED'}
+
     out_key = 'displacementshader'
 
 
