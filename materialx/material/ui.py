@@ -14,6 +14,7 @@ from ..nodes.node import is_mx_node_valid
 from .. import utils
 from ..preferences import addon_preferences
 from ..utils import pass_node_reroute, title_str, mx_properties
+from ..preferences import addon_preferences
 
 from ..utils import logging
 log = logging.Log(tag='material.ui')
@@ -699,42 +700,78 @@ class MATERIAL_PT_dev(MATERIALX_ChildPanel):
 
     @classmethod
     def poll(cls, context):
-        return addon_preferences().dev_tools
+        preferences = addon_preferences()
+        return preferences.dev_tools if preferences else None
 
     def draw(self, context):
         layout = self.layout
-
         layout.operator(MATERIAL_OP_export_mx_console.bl_idname)
 
 
-def depsgraph_update(depsgraph):
-    context = bpy.context
-    mx_node_tree = None
-    if hasattr(context, 'object') and context.object and context.object.active_material:
-        mx_node_tree = mx_properties(context.object.active_material).mx_node_tree
-
-    # trying to show MaterialX area with node tree or Shader area
-    screen = context.screen
-    if not hasattr(screen, 'areas'):
-        return
-
-    for window in context.window_manager.windows:
-        for area in window.screen.areas:
-            if not mx_node_tree:
-                if area.ui_type != utils.with_prefix('MxNodeTree'):
-                    continue
-
-                area.ui_type = 'ShaderNodeTree'
-                continue
-
-            if area.ui_type not in (utils.with_prefix('MxNodeTree'), 'ShaderNodeTree'):
-                continue
-
-            space = next(s for s in area.spaces if s.type == 'NODE_EDITOR')
-            if space.pin or space.shader_type != 'OBJECT':
-                continue
-
-            area.ui_type = utils.with_prefix('MxNodeTree')
-            space.node_tree = mx_node_tree
-
-            mx_node_tree.update_links()
+# TODO: Uncomment
+# def depsgraph_update(depsgraph):
+#     context = bpy.context
+#     mx_node_tree = None
+#     if hasattr(context, 'object') and context.object and context.object.active_material:
+#         mx_node_tree = mx_properties(context.object.active_material).mx_node_tree
+#
+#     # trying to show MaterialX area with node tree or Shader area
+#     screen = context.screen
+#     if not hasattr(screen, 'areas'):
+#         return
+#
+#     bpy.types.NODE_HT_header.remove(update_material_ui)
+#
+#     for window in context.window_manager.windows:
+#         for area in window.screen.areas:
+#             if not mx_node_tree:
+#                 if area.ui_type != utils.with_prefix('MxNodeTree'):
+#                     continue
+#
+#                 area.ui_type = 'ShaderNodeTree'
+#                 continue
+#
+#             if area.ui_type not in (utils.with_prefix('MxNodeTree'), 'ShaderNodeTree'):
+#                 continue
+#
+#             space = next(s for s in area.spaces if s.type == 'NODE_EDITOR')
+#             if space.pin or space.shader_type != 'OBJECT':
+#                 continue
+#
+#             area.ui_type = utils.with_prefix('MxNodeTree')
+#             space.node_tree = mx_node_tree
+#
+#             mx_node_tree.update_links()
+#
+#     bpy.types.NODE_HT_header.append(update_material_ui)
+#
+#
+# # update for material ui according to MaterialX nodetree header changes
+# def update_material_ui(self, context):
+#     obj = context.active_object
+#     if not obj:
+#         return
+#
+#     mat = obj.active_material
+#     if not mat:
+#         return
+#
+#     space = context.space_data
+#     if space.tree_type != utils.with_prefix('MxNodeTree'):
+#         return
+#
+#     ui_mx_node_tree = mx_properties(mat).mx_node_tree
+#     editor_node_tree = space.node_tree
+#
+#     if editor_node_tree != ui_mx_node_tree and not space.pin and editor_node_tree:
+#         mx_properties(mat).mx_node_tree = editor_node_tree
+#
+#
+# def register():
+#     # set update for material ui according to MaterialX nodetree header changes
+#     bpy.types.NODE_HT_header.append(update_material_ui)
+#
+#
+# def unregister():
+#     # remove update for material ui according to MaterialX nodetree header changes
+#     bpy.types.NODE_HT_header.remove(update_material_ui)

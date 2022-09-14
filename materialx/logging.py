@@ -11,7 +11,7 @@ FORMAT_STR = "%(asctime)s %(levelname)s %(name)s [%(thread)d]:  %(message)s"
 
 # root logger for the addon
 logger = logging.getLogger(ADDON_ALIAS)
-logger.setLevel('DEBUG')
+logger.setLevel('INFO')
 
 # file_handler = logging.handlers.RotatingFileHandler(PLUGIN_ROOT_DIR / 'usdhydra.log',
 #                                                     mode='w', encoding='utf-8', delay=True,
