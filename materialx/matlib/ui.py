@@ -84,7 +84,7 @@ class MATLIB_OP_load_package(bpy.types.Operator):
 
 class MATLIB_PT_matlib(bpy.types.Panel):
     bl_idname = utils.with_prefix("MATLIB_PT_matlib", '_', True)
-    bl_label = "Material Library"
+    bl_label = "MaterialX Library"
     bl_context = "material"
     bl_region_type = 'WINDOW'
     bl_space_type = 'PROPERTIES'

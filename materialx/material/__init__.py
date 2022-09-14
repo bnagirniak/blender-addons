@@ -9,7 +9,6 @@ from . import (
 )
 
 register_classes, unregister_classes = bpy.utils.register_classes_factory([
-    ui.MATERIAL_PT_context,
     ui.MATERIAL_OP_new_mx_node_tree,
     ui.MATERIAL_OP_duplicate_mx_node_tree,
     ui.MATERIAL_OP_convert_shader_to_mx,

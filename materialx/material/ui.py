@@ -18,72 +18,6 @@ from ..utils import logging
 log = logging.Log(tag='material.ui')
 
 
-class MATERIAL_PT_context(bpy.types.Panel):
-    bl_label = ""
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_context = "material"
-    bl_options = {'HIDE_HEADER'}
-
-    @classmethod
-    def poll(cls, context):
-        if context.active_object and context.active_object.type == 'GPENCIL':
-            return False
-        else:
-            return context.material or context.object
-
-    def draw(self, context):
-        layout = self.layout
-
-        material = context.material
-        object = context.object
-        slot = context.material_slot
-        space = context.space_data
-
-        if object:
-            is_sortable = len(object.material_slots) > 1
-            rows = 1
-            if is_sortable:
-                rows = 4
-
-            row = layout.row()
-
-            row.template_list("MATERIAL_UL_matslots", "", object, "material_slots", object,
-                              "active_material_index", rows=rows)
-
-            col = row.column(align=True)
-            col.operator("object.material_slot_add", icon='ADD', text="")
-            col.operator("object.material_slot_remove", icon='REMOVE', text="")
-
-            col.menu("MATERIAL_MT_context_menu", icon='DOWNARROW_HLT', text="")
-
-            if is_sortable:
-                col.separator()
-
-                col.operator("object.material_slot_move", icon='TRIA_UP', text="").direction = 'UP'
-                col.operator("object.material_slot_move", icon='TRIA_DOWN', text="").direction = 'DOWN'
-
-            if object.mode == 'EDIT':
-                row = layout.row(align=True)
-                row.operator("object.material_slot_assign", text="Assign")
-                row.operator("object.material_slot_select", text="Select")
-                row.operator("object.material_slot_deselect", text="Deselect")
-
-        split = layout.split(factor=0.65)
-
-        if object:
-            split.template_ID(object, "active_material", new=utils.with_prefix("material_duplicate_mat_mx_node_tree"))
-            row = split.row()
-
-            if slot:
-                row.prop(slot, "link", text="")
-            else:
-                row.label()
-        elif material:
-            split.template_ID(space, "pin_id")
-            split.separator()
-
-
 class MATERIAL_OP_new_mx_node_tree(bpy.types.Operator):
     """Create new MaterialX node tree for selected material"""
     bl_idname = utils.with_prefix("material_new_mx_node_tree")
@@ -159,7 +93,7 @@ class MATERIAL_OP_unlink_mx_node_tree(bpy.types.Operator):
 
 
 class MATERIAL_MT_mx_node_tree(bpy.types.Menu):
-    bl_idname = "MATERIAL_MT_mx_node_tree"
+    bl_idname = utils.with_prefix("MATERIAL_MT_mx_node_tree", '_', True)
     bl_label = "MX Nodetree"
 
     def draw(self, context):
@@ -178,6 +112,7 @@ class MATERIAL_MT_mx_node_tree(bpy.types.Menu):
 
 
 class MATERIAL_PT_material(bpy.types.Panel):
+    bl_idname = utils.with_prefix("MATERIAL_PT_material", '_', True)
     bl_label = ""
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
@@ -411,8 +346,9 @@ class MATERIAL_OP_disconnect_node(bpy.types.Operator):
 
 
 class MATERIAL_PT_material_settings_surface(bpy.types.Panel):
+    bl_idname = utils.with_prefix('MATERIAL_PT_material_settings_surface', '_', True)
     bl_label = "surfaceshader"
-    bl_parent_id = 'MATERIAL_PT_material'
+    bl_parent_id = MATERIAL_PT_material.bl_idname
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
 
@@ -470,8 +406,9 @@ class MATERIAL_PT_material_settings_surface(bpy.types.Panel):
 
 
 class MATERIAL_PT_material_settings_displacement(bpy.types.Panel):
+    bl_idname = utils.with_prefix("MATERIAL_PT_material_settings_surface", '_', True)
     bl_label = "displacementshader"
-    bl_parent_id = 'MATERIAL_PT_material'
+    bl_parent_id = MATERIAL_PT_material.bl_idname
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
 
@@ -533,7 +470,7 @@ class MATERIAL_PT_output_node(bpy.types.Panel):
     bl_label = ""
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
-    bl_parent_id = 'MATERIAL_PT_material'
+    bl_parent_id = MATERIAL_PT_material.bl_idname
 
     @classmethod
     def poll(cls, context):
@@ -554,15 +491,18 @@ class MATERIAL_PT_output_node(bpy.types.Panel):
 
 
 class MATERIAL_PT_output_surface(MATERIAL_PT_output_node):
+    bl_idname = utils.with_prefix("MATERIAL_PT_output_surface", '_', True)
     bl_label = "Surface"
 
 
 class MATERIAL_PT_output_displacement(MATERIAL_PT_output_node):
+    bl_idname = utils.with_prefix("MATERIAL_PT_output_displacement", '_', True)
     bl_label = "Displacement"
     bl_options = {'DEFAULT_CLOSED'}
 
 
 class MATERIAL_PT_output_volume(MATERIAL_PT_output_node):
+    bl_idname = utils.with_prefix("MATERIAL_PT_output_volume", '_', True)
     bl_label = "Volume"
     bl_options = {'DEFAULT_CLOSED'}
 
@@ -669,6 +609,7 @@ class MATERIAL_OP_export_mx_console(bpy.types.Operator):
 
 
 class MATERIAL_PT_tools(bpy.types.Panel):
+    bl_idname = utils.with_prefix("MATERIAL_PT_tools", '_', True)
     bl_label = "MaterialX Tools"
     bl_space_type = "NODE_EDITOR"
     bl_region_type = "UI"
@@ -688,8 +629,9 @@ class MATERIAL_PT_tools(bpy.types.Panel):
 
 
 class MATERIAL_PT_dev(bpy.types.Panel):
+    bl_idname = utils.with_prefix('MATERIAL_PT_dev', '_', True)
     bl_label = "Dev"
-    bl_parent_id = 'MATERIAL_PT_tools'
+    bl_parent_id = MATERIAL_PT_tools.bl_idname
     bl_space_type = "NODE_EDITOR"
     bl_region_type = "UI"
 
