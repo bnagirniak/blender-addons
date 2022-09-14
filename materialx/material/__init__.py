@@ -3,19 +3,6 @@
 
 import bpy
 
-
-class MATERIALX_Panel(bpy.types.Panel):
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_context = 'render'
-
-
-class MATERIALX_ChildPanel(bpy.types.Panel):
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_parent_id = ''
-
-
 from . import (
     ui,
     properties
@@ -23,7 +10,6 @@ from . import (
 
 register_classes, unregister_classes = bpy.utils.register_classes_factory([
     ui.MATERIAL_PT_context,
-    ui.MATERIAL_PT_preview,
     ui.MATERIAL_OP_new_mx_node_tree,
     ui.MATERIAL_OP_duplicate_mx_node_tree,
     ui.MATERIAL_OP_convert_shader_to_mx,

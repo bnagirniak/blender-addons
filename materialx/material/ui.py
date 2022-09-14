@@ -8,11 +8,9 @@ import MaterialX as mx
 import bpy
 from bpy_extras.io_utils import ExportHelper
 
-from . import MATERIALX_Panel, MATERIALX_ChildPanel
 from ..node_tree import MxNodeTree, NODE_LAYER_SEPARATION_WIDTH
 from ..nodes.node import is_mx_node_valid
 from .. import utils
-from ..preferences import addon_preferences
 from ..utils import pass_node_reroute, title_str, mx_properties
 from ..preferences import addon_preferences
 
@@ -20,8 +18,10 @@ from ..utils import logging
 log = logging.Log(tag='material.ui')
 
 
-class MATERIAL_PT_context(MATERIALX_Panel):
+class MATERIAL_PT_context(bpy.types.Panel):
     bl_label = ""
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
     bl_context = "material"
     bl_options = {'HIDE_HEADER'}
 
@@ -82,19 +82,6 @@ class MATERIAL_PT_context(MATERIALX_Panel):
         elif material:
             split.template_ID(space, "pin_id")
             split.separator()
-
-
-class MATERIAL_PT_preview(MATERIALX_Panel):
-    bl_label = "Preview"
-    bl_context = "material"
-    bl_options = {'DEFAULT_CLOSED'}
-
-    @classmethod
-    def poll(cls, context):
-        return context.material
-
-    def draw(self, context):
-        self.layout.template_preview(context.material)
 
 
 class MATERIAL_OP_new_mx_node_tree(bpy.types.Operator):
@@ -190,8 +177,10 @@ class MATERIAL_MT_mx_node_tree(bpy.types.Menu):
             op.mx_node_tree_name = ng.name
 
 
-class MATERIAL_PT_material(MATERIALX_Panel):
+class MATERIAL_PT_material(bpy.types.Panel):
     bl_label = ""
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
     bl_context = "material"
 
     @classmethod
@@ -421,9 +410,11 @@ class MATERIAL_OP_disconnect_node(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class MATERIAL_PT_material_settings_surface(MATERIALX_ChildPanel):
+class MATERIAL_PT_material_settings_surface(bpy.types.Panel):
     bl_label = "surfaceshader"
     bl_parent_id = 'MATERIAL_PT_material'
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
 
     @classmethod
     def poll(cls, context):
@@ -478,9 +469,11 @@ class MATERIAL_PT_material_settings_surface(MATERIALX_ChildPanel):
         link.from_node.draw_node_view(context, layout)
 
 
-class MATERIAL_PT_material_settings_displacement(MATERIALX_ChildPanel):
+class MATERIAL_PT_material_settings_displacement(bpy.types.Panel):
     bl_label = "displacementshader"
     bl_parent_id = 'MATERIAL_PT_material'
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
 
     @classmethod
     def poll(cls, context):
@@ -536,8 +529,10 @@ class MATERIAL_PT_material_settings_displacement(MATERIALX_ChildPanel):
         link.from_node.draw_node_view(context, layout)
 
 
-class MATERIAL_PT_output_node(MATERIALX_ChildPanel):
+class MATERIAL_PT_output_node(bpy.types.Panel):
     bl_label = ""
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
     bl_parent_id = 'MATERIAL_PT_material'
 
     @classmethod
@@ -673,7 +668,7 @@ class MATERIAL_OP_export_mx_console(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class MATERIAL_PT_tools(MATERIALX_Panel):
+class MATERIAL_PT_tools(bpy.types.Panel):
     bl_label = "MaterialX Tools"
     bl_space_type = "NODE_EDITOR"
     bl_region_type = "UI"
@@ -692,7 +687,7 @@ class MATERIAL_PT_tools(MATERIALX_Panel):
         layout.operator(MATERIAL_OP_export_mx_file.bl_idname, text="Export MaterialX to file", icon='EXPORT')
 
 
-class MATERIAL_PT_dev(MATERIALX_ChildPanel):
+class MATERIAL_PT_dev(bpy.types.Panel):
     bl_label = "Dev"
     bl_parent_id = 'MATERIAL_PT_tools'
     bl_space_type = "NODE_EDITOR"
