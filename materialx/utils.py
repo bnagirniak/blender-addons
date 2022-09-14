@@ -28,6 +28,8 @@ MATLIB_FOLDER = "matlib"
 MATLIB_DIR = ADDON_DATA_DIR / MATLIB_FOLDER
 MATLIB_URL = "https://api.matlib.gpuopen.com/api"
 
+TEMP_FOLDER = "bl-materialx"
+
 SUPPORTED_FORMATS = {".png", ".jpeg", ".jpg", ".hdr", ".tga", ".bmp"}
 DEFAULT_FORMAT = ".hdr"
 BLENDER_DEFAULT_FORMAT = "HDR"
@@ -331,7 +333,7 @@ def export_mx_to_file(doc, filepath, *, mx_node_tree=None, is_export_deps=False,
 
 
 def temp_dir():
-    d = Path(tempfile.gettempdir()) / "blender-mx"
+    d = Path(tempfile.gettempdir()) / TEMP_FOLDER
     if not d.is_dir():
         log("Creating temp dir", d)
         d.mkdir()
