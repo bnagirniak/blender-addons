@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 # Copyright 2022, AMD
 
-from ..node_parser import NodeParser, Id
+from .node_parser import NodeParser, Id
 
 
 class ShaderNodeOutputMaterial(NodeParser):

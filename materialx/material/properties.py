@@ -7,7 +7,7 @@ import bpy
 import MaterialX as mx
 
 from ..node_tree import MxNodeTree
-from ..bl_nodes.nodes import ShaderNodeOutputMaterial
+from ..bl_nodes.output import ShaderNodeOutputMaterial
 from ..utils import MX_LIBS_DIR
 
 from ..utils import logging, get_temp_file, MaterialXProperties

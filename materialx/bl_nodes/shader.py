@@ -3,10 +3,8 @@
 
 import math
 
-from ..node_parser import NodeParser
-
-from ... import logging
-log = logging.Log("bl_nodes.nodes.shader")
+from .node_parser import NodeParser
+from . import log
 
 
 SSS_MIN_RADIUS = 0.0001
