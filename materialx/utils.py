@@ -26,8 +26,35 @@ NODE_CLASSES_DIR = ADDON_DATA_DIR / NODE_CLASSES_FOLDER
 
 MATLIB_FOLDER = "matlib"
 MATLIB_DIR = ADDON_DATA_DIR / MATLIB_FOLDER
+MATLIB_URL = "https://api.matlib.gpuopen.com/api"
+
+SUPPORTED_FORMATS = {".png", ".jpeg", ".jpg", ".hdr", ".tga", ".bmp"}
+DEFAULT_FORMAT = ".hdr"
+BLENDER_DEFAULT_FORMAT = "HDR"
+BLENDER_DEFAULT_COLOR_MODE = "RGB"
+READONLY_IMAGE_FORMATS = {".dds"}  # blender can read these formats, but can't write
 
 os.environ['MATERIALX_SEARCH_PATH'] = str(MX_LIBS_DIR)
+
+
+class MaterialXProperties(bpy.types.PropertyGroup):
+    bl_type = None
+
+    @classmethod
+    def register(cls):
+        setattr(cls.bl_type, ADDON_ALIAS, bpy.props.PointerProperty(
+            name="MaterialX properties",
+            description="MaterialX properties",
+            type=cls,
+        ))
+
+    @classmethod
+    def unregister(cls):
+        delattr(cls.bl_type, ADDON_ALIAS)
+
+
+def mx_properties(obj):
+    return getattr(obj, ADDON_ALIAS)
 
 
 def with_prefix(name, separator='.', upper=False):
@@ -391,21 +418,59 @@ def update_ui(area_type='PROPERTIES', region_type='WINDOW'):
                         region.tag_redraw()
 
 
-class MaterialXProperties(bpy.types.PropertyGroup):
-    bl_type = None
+def cache_image_file(image: bpy.types.Image, cache_check=True):
+    image_path = Path(image.filepath_from_user())
+    if not image.packed_file and image.source != 'GENERATED':
+        if not image_path.is_file():
+            log.warn("Image is missing", image, image_path)
+            return None
 
-    @classmethod
-    def register(cls):
-        setattr(cls.bl_type, ADDON_ALIAS, bpy.props.PointerProperty(
-            name="MaterialX properties",
-            description="MaterialX properties",
-            type=cls,
-        ))
+        image_suffix = image_path.suffix.lower()
 
-    @classmethod
-    def unregister(cls):
-        delattr(cls.bl_type, ADDON_ALIAS)
+        if image_suffix in SUPPORTED_FORMATS and\
+                f".{image.file_format.lower()}" in SUPPORTED_FORMATS and not image.is_dirty:
+            return image_path
+
+        if image_suffix in READONLY_IMAGE_FORMATS:
+            return image_path
+
+    temp_path = get_temp_file(DEFAULT_FORMAT, image_path.stem)
+    if cache_check and image.source != 'GENERATED' and temp_path.is_file():
+        return temp_path
+
+    scene = bpy.context.scene
+    user_format = scene.render.image_settings.file_format
+    user_color_mode = scene.render.image_settings.color_mode
+
+    # in some scenes the color_mode is undefined
+    # we can read it but unable to assign back, so switch it to 'RGB' if color_mode isn't selected
+    if not user_color_mode:
+        user_color_mode = 'RGB'
+
+    scene.render.image_settings.file_format = BLENDER_DEFAULT_FORMAT
+    scene.render.image_settings.color_mode = BLENDER_DEFAULT_COLOR_MODE
+
+    try:
+        image.save_render(filepath=str(temp_path))
+    finally:
+        scene.render.image_settings.file_format = user_format
+        scene.render.image_settings.color_mode = user_color_mode
+
+    return temp_path
 
 
-def mx_properties(obj):
-    return getattr(obj, ADDON_ALIAS)
+def cache_image_file_path(image_path, cache_check=True):
+    if image_path.suffix.lower() in SUPPORTED_FORMATS:
+        return image_path
+
+    if cache_check:
+        temp_path = get_temp_file(DEFAULT_FORMAT, image_path.name)
+        if temp_path.is_file():
+            return temp_path
+
+    image = bpy.data.images.load(str(image_path))
+    try:
+        return cache_image_file(image, cache_check)
+
+    finally:
+        bpy.data.images.remove(image)

@@ -13,10 +13,8 @@ from concurrent import futures
 
 import bpy.utils.previews
 
-from ..utils import logging, update_ui, MATLIB_DIR
+from ..utils import logging, update_ui, MATLIB_DIR, MATLIB_URL
 log = logging.Log('matlib.manager')
-
-URL = "https://api.matlib.gpuopen.com/api"
 
 
 def download_file(url, path, cache_check=True):
@@ -101,7 +99,7 @@ class Render:
         return self.material().cache_dir
 
     def get_info(self, cache_chek=True):
-        json_data = request_json(f"{URL}/renders/{self.id}", None,
+        json_data = request_json(f"{MATLIB_URL}/renders/{self.id}", None,
                                  self.cache_dir / f"R-{self.id[:8]}.json", cache_chek)
 
         self.author = json_data['author']
@@ -152,7 +150,7 @@ class Package:
         return self.file_path.is_file()
 
     def get_info(self, cache_check=True):
-        json_data = request_json(f"{URL}/packages/{self.id}", None,
+        json_data = request_json(f"{MATLIB_URL}/packages/{self.id}", None,
                                  self.cache_dir / "info.json", cache_check)
 
         self.author = json_data['author']
@@ -212,7 +210,7 @@ class Category:
         if not self.id:
             return
 
-        json_data = request_json(f"{URL}/categories/{self.id}", None,
+        json_data = request_json(f"{MATLIB_URL}/categories/{self.id}", None,
                                  self.cache_dir / f"C-{self.id[:8]}.json", use_cache)
 
         self.title = json_data['title']
@@ -263,7 +261,7 @@ class Material:
         limit = 500
 
         while True:
-            res_json = request_json(f"{URL}/materials", {'limit': limit, 'offset': offset}, None)
+            res_json = request_json(f"{MATLIB_URL}/materials", {'limit': limit, 'offset': offset}, None)
 
             count = res_json['count']
 
