@@ -8,97 +8,19 @@ import MaterialX as mx
 import bpy
 from bpy_extras.io_utils import ExportHelper
 
-from . import MATERIALX_Panel, MATERIALX_ChildPanel
 from ..node_tree import MxNodeTree, NODE_LAYER_SEPARATION_WIDTH
 from ..nodes.node import is_mx_node_valid
 from .. import utils
-from ..preferences import addon_preferences
 from ..utils import pass_node_reroute, title_str, mx_properties
+from ..preferences import addon_preferences
 
 from ..utils import logging
 log = logging.Log(tag='material.ui')
 
 
-class MATERIAL_PT_context(MATERIALX_Panel):
-    bl_label = ""
-    bl_context = "material"
-    bl_options = {'HIDE_HEADER'}
-
-    @classmethod
-    def poll(cls, context):
-        if context.active_object and context.active_object.type == 'GPENCIL':
-            return False
-        else:
-            return context.material or context.object
-
-    def draw(self, context):
-        layout = self.layout
-
-        material = context.material
-        object = context.object
-        slot = context.material_slot
-        space = context.space_data
-
-        if object:
-            is_sortable = len(object.material_slots) > 1
-            rows = 1
-            if is_sortable:
-                rows = 4
-
-            row = layout.row()
-
-            row.template_list("MATERIAL_UL_matslots", "", object, "material_slots", object,
-                              "active_material_index", rows=rows)
-
-            col = row.column(align=True)
-            col.operator("object.material_slot_add", icon='ADD', text="")
-            col.operator("object.material_slot_remove", icon='REMOVE', text="")
-
-            col.menu("MATERIAL_MT_context_menu", icon='DOWNARROW_HLT', text="")
-
-            if is_sortable:
-                col.separator()
-
-                col.operator("object.material_slot_move", icon='TRIA_UP', text="").direction = 'UP'
-                col.operator("object.material_slot_move", icon='TRIA_DOWN', text="").direction = 'DOWN'
-
-            if object.mode == 'EDIT':
-                row = layout.row(align=True)
-                row.operator("object.material_slot_assign", text="Assign")
-                row.operator("object.material_slot_select", text="Select")
-                row.operator("object.material_slot_deselect", text="Deselect")
-
-        split = layout.split(factor=0.65)
-
-        if object:
-            split.template_ID(object, "active_material", new=utils.with_prefix("material_duplicate_mat_mx_node_tree"))
-            row = split.row()
-
-            if slot:
-                row.prop(slot, "link", text="")
-            else:
-                row.label()
-        elif material:
-            split.template_ID(space, "pin_id")
-            split.separator()
-
-
-class MATERIAL_PT_preview(MATERIALX_Panel):
-    bl_label = "Preview"
-    bl_context = "material"
-    bl_options = {'DEFAULT_CLOSED'}
-
-    @classmethod
-    def poll(cls, context):
-        return context.material
-
-    def draw(self, context):
-        self.layout.template_preview(context.material)
-
-
 class MATERIAL_OP_new_mx_node_tree(bpy.types.Operator):
     """Create new MaterialX node tree for selected material"""
-    bl_idname = utils.with_prefix("material_new_mx_node_tree")
+    bl_idname = utils.with_prefix('material_new_mx_node_tree')
     bl_label = "New"
 
     def execute(self, context):
@@ -112,7 +34,7 @@ class MATERIAL_OP_new_mx_node_tree(bpy.types.Operator):
 
 class MATERIAL_OP_duplicate_mat_mx_node_tree(bpy.types.Operator):
     """Create duplicates of Material and MaterialX node tree for selected material"""
-    bl_idname = utils.with_prefix("material_duplicate_mat_mx_node_tree")
+    bl_idname = utils.with_prefix('material_duplicate_mat_mx_node_tree')
     bl_label = ""
 
     def execute(self, context):
@@ -123,7 +45,7 @@ class MATERIAL_OP_duplicate_mat_mx_node_tree(bpy.types.Operator):
 
 class MATERIAL_OP_duplicate_mx_node_tree(bpy.types.Operator):
     """Create duplicate of MaterialX node tree for selected material"""
-    bl_idname = utils.with_prefix("material_duplicate_mx_node_tree")
+    bl_idname = utils.with_prefix('material_duplicate_mx_node_tree')
     bl_label = ""
 
     def execute(self, context):
@@ -138,7 +60,7 @@ class MATERIAL_OP_duplicate_mx_node_tree(bpy.types.Operator):
 
 class MATERIAL_OP_convert_shader_to_mx(bpy.types.Operator):
     """Converts standard shader node tree to MaterialX node tree for selected material"""
-    bl_idname = utils.with_prefix("material_convert_shader_to_mx")
+    bl_idname = utils.with_prefix('material_convert_shader_to_mx')
     bl_label = "Convert to MaterialX"
 
     def execute(self, context):
@@ -150,7 +72,7 @@ class MATERIAL_OP_convert_shader_to_mx(bpy.types.Operator):
 
 class MATERIAL_OP_link_mx_node_tree(bpy.types.Operator):
     """Link MaterialX node tree to selected material"""
-    bl_idname = utils.with_prefix("material_link_mx_node_tree")
+    bl_idname = utils.with_prefix('material_link_mx_node_tree')
     bl_label = ""
 
     mx_node_tree_name: bpy.props.StringProperty(default="")
@@ -162,7 +84,7 @@ class MATERIAL_OP_link_mx_node_tree(bpy.types.Operator):
 
 class MATERIAL_OP_unlink_mx_node_tree(bpy.types.Operator):
     """Unlink MaterialX node tree from selected material"""
-    bl_idname = utils.with_prefix("material_unlink_mx_node_tree")
+    bl_idname = utils.with_prefix('material_unlink_mx_node_tree')
     bl_label = ""
 
     def execute(self, context):
@@ -171,7 +93,7 @@ class MATERIAL_OP_unlink_mx_node_tree(bpy.types.Operator):
 
 
 class MATERIAL_MT_mx_node_tree(bpy.types.Menu):
-    bl_idname = "MATERIAL_MT_mx_node_tree"
+    bl_idname = utils.with_prefix('MATERIAL_MT_mx_node_tree', '_', True)
     bl_label = "MX Nodetree"
 
     def draw(self, context):
@@ -189,8 +111,11 @@ class MATERIAL_MT_mx_node_tree(bpy.types.Menu):
             op.mx_node_tree_name = ng.name
 
 
-class MATERIAL_PT_material(MATERIALX_Panel):
-    bl_label = ""
+class MATERIAL_PT_materialx(bpy.types.Panel):
+    bl_idname = utils.with_prefix("MATERIAL_PT_materialx", '_', True)
+    bl_label = "MaterialX"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
     bl_context = "material"
 
     @classmethod
@@ -201,12 +126,7 @@ class MATERIAL_PT_material(MATERIALX_Panel):
         mat_materialx = mx_properties(context.material)
         layout = self.layout
 
-        split = layout.row(align=True).split(factor=0.4)
-        row = split.column()
-        row.alignment = 'RIGHT'
-        row.label(text="MaterialX")
-        row = split.row()
-        row = row.row(align=True)
+        row = layout.row(align=True)
         row.menu(MATERIAL_MT_mx_node_tree.bl_idname, text="", icon='MATERIAL')
 
         if mat_materialx.mx_node_tree:
@@ -219,14 +139,10 @@ class MATERIAL_PT_material(MATERIALX_Panel):
             row.operator(MATERIAL_OP_convert_shader_to_mx.bl_idname, icon='FILE_TICK', text="Convert")
             row.operator(MATERIAL_OP_new_mx_node_tree.bl_idname, icon='ADD', text="")
 
-    def draw_header(self, context):
-        layout = self.layout
-        layout.label(text=f"Material: {context.material.name}")
-
 
 class MATERIAL_OP_link_mx_node(bpy.types.Operator):
     """Link MaterialX node"""
-    bl_idname = utils.with_prefix("material_link_mx_node")
+    bl_idname = utils.with_prefix('material_link_mx_node')
     bl_label = ""
 
     new_node_name: bpy.props.StringProperty()
@@ -259,7 +175,7 @@ class MATERIAL_OP_link_mx_node(bpy.types.Operator):
 
 class MATERIAL_OP_invoke_popup_input_nodes(bpy.types.Operator):
     """Open panel with nodes to link"""
-    bl_idname = utils.with_prefix("material_invoke_popup_input_nodes")
+    bl_idname = utils.with_prefix('material_invoke_popup_input_nodes')
     bl_label = ""
 
     input_num: bpy.props.IntProperty()
@@ -324,7 +240,7 @@ class MATERIAL_OP_invoke_popup_input_nodes(bpy.types.Operator):
 
 class MATERIAL_OP_invoke_popup_shader_nodes(bpy.types.Operator):
     """Open panel with shader nodes to link"""
-    bl_idname = utils.with_prefix("material_invoke_popup_shader_nodes")
+    bl_idname = utils.with_prefix('material_invoke_popup_shader_nodes')
     bl_label = ""
 
     input_num: bpy.props.IntProperty()
@@ -378,7 +294,7 @@ class MATERIAL_OP_invoke_popup_shader_nodes(bpy.types.Operator):
 
 class MATERIAL_OP_remove_node(bpy.types.Operator):
     """Remove linked node"""
-    bl_idname = utils.with_prefix("material_remove_node")
+    bl_idname = utils.with_prefix('material_remove_node')
     bl_label = "Remove"
 
     input_node_name: bpy.props.StringProperty()
@@ -402,7 +318,7 @@ class MATERIAL_OP_remove_node(bpy.types.Operator):
 
 class MATERIAL_OP_disconnect_node(bpy.types.Operator):
     """Disconnect linked node"""
-    bl_idname = utils.with_prefix("material_disconnect_node")
+    bl_idname = utils.with_prefix('material_disconnect_node')
     bl_label = "Disconnect"
 
     output_node_name: bpy.props.StringProperty()
@@ -420,9 +336,13 @@ class MATERIAL_OP_disconnect_node(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class MATERIAL_PT_material_settings_surface(MATERIALX_ChildPanel):
-    bl_label = "surfaceshader"
-    bl_parent_id = 'MATERIAL_PT_material'
+class MATERIAL_PT_materialx_output(bpy.types.Panel):
+    bl_label = ""
+    bl_parent_id = MATERIAL_PT_materialx.bl_idname
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+
+    out_key = ""
 
     @classmethod
     def poll(cls, context):
@@ -437,7 +357,7 @@ class MATERIAL_PT_material_settings_surface(MATERIALX_ChildPanel):
             layout.label(text="No output node")
             return
 
-        input = output_node.inputs[self.bl_label]
+        input = output_node.inputs[self.out_key]
         link = next((link for link in input.links if link.is_valid), None)
 
         split = layout.split(factor=0.4)
@@ -450,7 +370,7 @@ class MATERIAL_PT_material_settings_surface(MATERIALX_ChildPanel):
         box.scale_x = 0.7
         box.scale_y = 0.5
         op = box.operator(MATERIAL_OP_invoke_popup_shader_nodes.bl_idname, icon='HANDLETYPE_AUTO_CLAMP_VEC')
-        op.input_num = output_node.inputs.find(self.bl_label)
+        op.input_num = output_node.inputs.find(self.out_key)
 
         if link and is_mx_node_valid(link.from_node):
             row.prop(link.from_node, 'name', text="")
@@ -462,7 +382,6 @@ class MATERIAL_PT_material_settings_surface(MATERIALX_ChildPanel):
         row.label(icon='BLANK1')
 
         if not link:
-            layout.label(text="No input node")
             return
 
         if not is_mx_node_valid(link.from_node):
@@ -477,102 +396,23 @@ class MATERIAL_PT_material_settings_surface(MATERIALX_ChildPanel):
         link.from_node.draw_node_view(context, layout)
 
 
-class MATERIAL_PT_material_settings_displacement(MATERIALX_ChildPanel):
-    bl_label = "displacementshader"
-    bl_parent_id = 'MATERIAL_PT_material'
+class MATERIAL_PT_materialx_surfaceshader(MATERIAL_PT_materialx_output):
+    bl_idname = utils.with_prefix('MATERIAL_PT_materialx_surfaceshader', '_', True)
+    bl_label = "Surface Shader"
 
-    @classmethod
-    def poll(cls, context):
-        return bool(mx_properties(context.material).mx_node_tree)
-
-    def draw(self, context):
-        layout = self.layout
-
-        node_tree = mx_properties(context.material).mx_node_tree
-        output_node = node_tree.output_node
-        if not output_node:
-            layout.label(text="No output node")
-            return
-
-        input = output_node.inputs[self.bl_label]
-        link = next((link for link in input.links if link.is_valid), None)
-
-        split = layout.split(factor=0.4)
-        row = split.row(align=True)
-        row.alignment = 'RIGHT'
-        row.label(text='Displacement')
-
-        row = split.row(align=True)
-        box = row.box()
-        box.scale_x = 0.7
-        box.scale_y = 0.5
-        op = box.operator(MATERIAL_OP_invoke_popup_shader_nodes.bl_idname, icon='HANDLETYPE_AUTO_CLAMP_VEC')
-        op.input_num = output_node.inputs.find(self.bl_label)
-
-        if link and is_mx_node_valid(link.from_node):
-            row.prop(link.from_node, 'name', text="")
-        else:
-            box = row.box()
-            box.scale_y = 0.5
-            box.label(text='None')
-
-        row.label(icon='BLANK1')
-
-        if not link:
-            layout.label(text="No input node")
-            return
-
-        if not is_mx_node_valid(link.from_node):
-            layout.label(text="Unsupported node")
-            return
-
-        link = pass_node_reroute(link)
-        if not link:
-            return
-
-        layout.separator()
-
-        link.from_node.draw_node_view(context, layout)
+    out_key = 'surfaceshader'
 
 
-class MATERIAL_PT_output_node(MATERIALX_ChildPanel):
-    bl_label = ""
-    bl_parent_id = 'MATERIAL_PT_material'
-
-    @classmethod
-    def poll(cls, context):
-        return not bool(mx_properties(context.material).mx_node_tree)
-
-    def draw(self, context):
-        layout = self.layout
-
-        node_tree = context.material.node_tree
-
-        output_node = mx_properties(context.material).output_node
-        if not output_node:
-            layout.label(text="No output node")
-            return
-
-        input = output_node.inputs[self.bl_label]
-        layout.template_node_view(node_tree, output_node, input)
-
-
-class MATERIAL_PT_output_surface(MATERIAL_PT_output_node):
-    bl_label = "Surface"
-
-
-class MATERIAL_PT_output_displacement(MATERIAL_PT_output_node):
-    bl_label = "Displacement"
+class MATERIAL_PT_materialx_displacementshader(MATERIAL_PT_materialx_output):
+    bl_idname = utils.with_prefix('MATERIAL_PT_materialx_sdisplacementshader', '_', True)
+    bl_label = "Displacement Shader"
     bl_options = {'DEFAULT_CLOSED'}
 
-
-class MATERIAL_PT_output_volume(MATERIAL_PT_output_node):
-    bl_label = "Volume"
-    bl_options = {'DEFAULT_CLOSED'}
+    out_key = 'displacementshader'
 
 
 class MATERIAL_OP_export_mx_file(bpy.types.Operator, ExportHelper):
-    bl_idname = utils.with_prefix("material_export_mx_file")
+    bl_idname = utils.with_prefix('material_export_mx_file')
     bl_label = "Export MaterialX"
     bl_description = "Export material as MaterialX node tree to .mtlx file"
 
@@ -659,7 +499,7 @@ class MATERIAL_OP_export_mx_file(bpy.types.Operator, ExportHelper):
 
 
 class MATERIAL_OP_export_mx_console(bpy.types.Operator):
-    bl_idname = utils.with_prefix("material_export_mx_console")
+    bl_idname = utils.with_prefix('material_export_mx_console')
     bl_label = "Export MaterialX to Console"
     bl_description = "Export material as MaterialX node tree to console"
 
@@ -672,7 +512,8 @@ class MATERIAL_OP_export_mx_console(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class MATERIAL_PT_tools(MATERIALX_Panel):
+class MATERIAL_PT_tools(bpy.types.Panel):
+    bl_idname = utils.with_prefix('MATERIAL_PT_tools', '_', True)
     bl_label = "MaterialX Tools"
     bl_space_type = "NODE_EDITOR"
     bl_region_type = "UI"
@@ -691,50 +532,18 @@ class MATERIAL_PT_tools(MATERIALX_Panel):
         layout.operator(MATERIAL_OP_export_mx_file.bl_idname, text="Export MaterialX to file", icon='EXPORT')
 
 
-class MATERIAL_PT_dev(MATERIALX_ChildPanel):
+class MATERIAL_PT_dev(bpy.types.Panel):
+    bl_idname = utils.with_prefix('MATERIAL_PT_dev', '_', True)
     bl_label = "Dev"
-    bl_parent_id = 'MATERIAL_PT_tools'
+    bl_parent_id = MATERIAL_PT_tools.bl_idname
     bl_space_type = "NODE_EDITOR"
     bl_region_type = "UI"
 
     @classmethod
     def poll(cls, context):
-        return addon_preferences().dev_tools
+        preferences = addon_preferences()
+        return preferences.dev_tools if preferences else True
 
     def draw(self, context):
         layout = self.layout
-
         layout.operator(MATERIAL_OP_export_mx_console.bl_idname)
-
-
-def depsgraph_update(depsgraph):
-    context = bpy.context
-    mx_node_tree = None
-    if hasattr(context, 'object') and context.object and context.object.active_material:
-        mx_node_tree = mx_properties(context.object.active_material).mx_node_tree
-
-    # trying to show MaterialX area with node tree or Shader area
-    screen = context.screen
-    if not hasattr(screen, 'areas'):
-        return
-
-    for window in context.window_manager.windows:
-        for area in window.screen.areas:
-            if not mx_node_tree:
-                if area.ui_type != utils.with_prefix('MxNodeTree'):
-                    continue
-
-                area.ui_type = 'ShaderNodeTree'
-                continue
-
-            if area.ui_type not in (utils.with_prefix('MxNodeTree'), 'ShaderNodeTree'):
-                continue
-
-            space = next(s for s in area.spaces if s.type == 'NODE_EDITOR')
-            if space.pin or space.shader_type != 'OBJECT':
-                continue
-
-            area.ui_type = utils.with_prefix('MxNodeTree')
-            space.node_tree = mx_node_tree
-
-            mx_node_tree.update_links()

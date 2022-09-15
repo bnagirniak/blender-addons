@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 # Copyright 2022, AMD
 
-from ..node_parser import NodeParser
-from ...utils import cache_image_file
+from .node_parser import NodeParser
+from ..utils import cache_image_file
 
 
 TEXTURE_ERROR_COLOR = (1.0, 0.0, 1.0)  # following Cycles color for wrong Texture nodes

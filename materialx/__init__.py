@@ -46,14 +46,14 @@ def register():
 
     register_classes()
     nodes.register()
-    matlib.register()
     material.register()
+    matlib.register()
 
 
 def unregister():
     log("unregister")
 
-    material.unregister()
     matlib.unregister()
+    material.unregister()
     nodes.unregister()
     unregister_classes()

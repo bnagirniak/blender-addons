@@ -37,4 +37,8 @@ class AddonPreferences(bpy.types.AddonPreferences):
 
 
 def addon_preferences():
+    if ADDON_ALIAS not in bpy.context.preferences.addons:
+        return None
+
     return bpy.context.preferences.addons[ADDON_ALIAS].preferences
+

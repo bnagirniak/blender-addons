@@ -84,12 +84,16 @@ class MATLIB_OP_load_package(bpy.types.Operator):
 
 class MATLIB_PT_matlib(bpy.types.Panel):
     bl_idname = utils.with_prefix("MATLIB_PT_matlib", '_', True)
-    bl_label = "Material Library"
+    bl_label = "MaterialX Library"
     bl_context = "material"
     bl_region_type = 'WINDOW'
     bl_space_type = 'PROPERTIES'
     bl_options = {'DEFAULT_CLOSED'}
 
+    @classmethod
+    def poll(cls, context):
+        return context.material
+    
     def draw(self, context):
         layout = self.layout
         matlib_prop = utils.mx_properties(context.window_manager).matlib

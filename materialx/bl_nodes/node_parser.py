@@ -9,6 +9,7 @@ import MaterialX as mx
 from .. import utils
 from ..utils import pass_node_reroute
 from ..nodes import get_mx_node_cls
+
 from .. import logging
 log = logging.Log("bl_nodes.node_parser")
 
@@ -265,8 +266,8 @@ class NodeParser:
     @staticmethod
     def get_node_parser_cls(bl_idname):
         """ Returns NodeParser class for node_idname or None if not found """
-        from . import nodes
-        return getattr(nodes, bl_idname, None)
+        from . import node_parser_classes
+        return next((cls for cls in node_parser_classes if cls.__name__ == bl_idname), None)
 
     # INTERNAL FUNCTIONS
     def _export_node(self, node, out_key, to_socket, group_node=None):

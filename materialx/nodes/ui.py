@@ -195,7 +195,8 @@ class NODES_PT_dev(bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
-        return addon_preferences().dev_tools
+        preferences = addon_preferences()
+        return preferences.dev_tools if preferences else True
 
     def draw(self, context):
         layout = self.layout

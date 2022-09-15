@@ -1,10 +1,8 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 # Copyright 2022, AMD
 
-from ..node_parser import NodeParser
-
-from ... import logging
-log = logging.Log("bl_nodes.nodes.color")
+from .node_parser import NodeParser
+from . import log
 
 
 class ShaderNodeInvert(NodeParser):

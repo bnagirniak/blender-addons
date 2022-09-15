@@ -7,7 +7,7 @@ import bpy
 import MaterialX as mx
 
 from ..node_tree import MxNodeTree
-from ..bl_nodes.nodes import ShaderNodeOutputMaterial
+from ..bl_nodes.output import ShaderNodeOutputMaterial
 from ..utils import MX_LIBS_DIR
 
 from ..utils import logging, get_temp_file, MaterialXProperties
@@ -30,8 +30,7 @@ class MaterialProperties(MaterialXProperties):
             return None
 
         return next((node for node in material.node_tree.nodes if
-                     # TODO add implementation
-                     # node.bl_idname == ShaderNodeOutputMaterial.__name__ and
+                     node.bl_idname == ShaderNodeOutputMaterial.__name__ and
                      node.is_active_output), None)
 
     def export(self, obj: bpy.types.Object) -> [mx.Document, None]:
