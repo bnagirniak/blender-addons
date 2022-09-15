@@ -253,10 +253,10 @@ class MxNodeTree(bpy.types.ShaderNodeTree):
     def update_(self):
         self.update_links()
 
-        # TODO: Uncomment
-        # for material in bpy.data.materials:
-        #     if material.hdusd.mx_node_tree and material.hdusd.mx_node_tree.name == self.name:
-        #         material.hdusd.update()
+        for material in bpy.data.materials:
+            if utils.mx_properties(material).mx_node_tree and \
+                    utils.mx_properties(material).mx_node_tree.name == self.name:
+                utils.mx_properties(material).update()
 
         for window in bpy.context.window_manager.windows:
             for area in window.screen.areas:
