@@ -50,7 +50,7 @@ class NODES_OP_import_file(bpy.types.Operator, ImportHelper):
 
 class NODES_OP_export_file(bpy.types.Operator, ExportHelper):
     bl_idname = utils.with_prefix('nodes_export_file')
-    bl_label = "Export MaterialX"
+    bl_label = "Export to File"
     bl_description = "Export MaterialX node tree to .mtlx file"
 
     # region properties
@@ -137,7 +137,7 @@ class NODES_OP_export_file(bpy.types.Operator, ExportHelper):
 
 class NODES_OP_export_console(bpy.types.Operator):
     bl_idname = utils.with_prefix('nodes_export_console')
-    bl_label = "Export MaterialX to Console"
+    bl_label = "Export to Console"
     bl_description = "Export MaterialX node tree to console"
 
     def execute(self, context):
@@ -183,7 +183,7 @@ class NODES_PT_tools(bpy.types.Panel):
 
         layout.operator(NODES_OP_create_basic_nodes.bl_idname, icon='ADD')
         layout.operator(NODES_OP_import_file.bl_idname, icon='IMPORT')
-        layout.operator(NODES_OP_export_file.bl_idname, icon='EXPORT', text='Export MaterialX to file')
+        layout.operator(NODES_OP_export_file.bl_idname, icon='EXPORT')
 
 
 class NODES_PT_dev(bpy.types.Panel):

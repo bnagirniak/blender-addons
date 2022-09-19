@@ -33,8 +33,8 @@ class MaterialProperties(MaterialXProperties):
                      node.bl_idname == ShaderNodeOutputMaterial.__name__ and
                      node.is_active_output), None)
 
-    def export(self, obj: bpy.types.Object) -> [mx.Document, None]:
-        if self.mx_node_tree:
+    def export(self, obj: bpy.types.Object, check_mx_node_tree=True) -> [mx.Document, None]:
+        if check_mx_node_tree and self.mx_node_tree:
             return self.mx_node_tree.export()
 
         material = self.id_data

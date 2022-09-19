@@ -323,13 +323,13 @@ def export_mx_to_file(doc, filepath, *, mx_node_tree=None, is_export_deps=False,
                     dest_path = texture_dir / f"{source_path.stem}{source_path.suffix}"
 
                 shutil.copy(source_path, dest_path)
-                log(f"Export file {source_path} to {dest_path}: completed successfuly")
+                log(f"Export file {source_path} to {dest_path}: completed successfully")
 
             rel_dest_path = dest_path.relative_to(root_dir)
             mx_input.setValue(str(rel_dest_path), mx_input.getType())
 
     mx.writeToXmlFile(doc, filepath)
-    log(f"Export MaterialX to {filepath}: completed successfuly")
+    log(f"Export MaterialX to {filepath}: completed successfully")
 
 
 def temp_dir():

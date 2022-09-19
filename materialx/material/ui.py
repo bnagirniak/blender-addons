@@ -404,15 +404,15 @@ class MATERIAL_PT_materialx_surfaceshader(MATERIAL_PT_materialx_output):
 
 
 class MATERIAL_PT_materialx_displacementshader(MATERIAL_PT_materialx_output):
-    bl_idname = utils.with_prefix('MATERIAL_PT_materialx_sdisplacementshader', '_', True)
+    bl_idname = utils.with_prefix('MATERIAL_PT_materialx_displacementshader', '_', True)
     bl_label = "Displacement Shader"
     bl_options = {'DEFAULT_CLOSED'}
 
     out_key = 'displacementshader'
 
 
-class MATERIAL_OP_export_mx_file(bpy.types.Operator, ExportHelper):
-    bl_idname = utils.with_prefix('material_export_mx_file')
+class MATERIAL_OP_export_file(bpy.types.Operator, ExportHelper):
+    bl_idname = utils.with_prefix('material_export_file')
     bl_label = "Export MaterialX"
     bl_description = "Export material as MaterialX node tree to .mtlx file"
 
@@ -476,7 +476,7 @@ class MATERIAL_OP_export_mx_file(bpy.types.Operator, ExportHelper):
             self.filepath = str(Path(self.filepath).parent / context.material.name_full / Path(self.filepath).name)
 
         utils.export_mx_to_file(doc, self.filepath,
-                                mx_node_tree=materialx_prop.mx_node_tree,
+                                mx_node_tree=None,
                                 is_export_deps=self.is_export_deps,
                                 is_export_textures=self.is_export_textures,
                                 texture_dir_name=self.texture_dir_name,
@@ -498,13 +498,13 @@ class MATERIAL_OP_export_mx_file(bpy.types.Operator, ExportHelper):
         row.prop(self, 'texture_dir_name', text='')
 
 
-class MATERIAL_OP_export_mx_console(bpy.types.Operator):
-    bl_idname = utils.with_prefix('material_export_mx_console')
-    bl_label = "Export MaterialX to Console"
+class MATERIAL_OP_export_console(bpy.types.Operator):
+    bl_idname = utils.with_prefix('material_export_console')
+    bl_label = "Export to Console"
     bl_description = "Export material as MaterialX node tree to console"
 
     def execute(self, context):
-        doc = mx_properties(context.material).export(context.object)
+        doc = mx_properties(context.material).export(context.object, False)
         if not doc:
             return {'CANCELLED'}
 
@@ -529,7 +529,7 @@ class MATERIAL_PT_tools(bpy.types.Panel):
         layout = self.layout
 
         layout.operator(MATERIAL_OP_convert_shader_to_mx.bl_idname, icon='FILE_TICK')
-        layout.operator(MATERIAL_OP_export_mx_file.bl_idname, text="Export MaterialX to file", icon='EXPORT')
+        layout.operator(MATERIAL_OP_export_file.bl_idname, text="Export MaterialX to file", icon='EXPORT')
 
 
 class MATERIAL_PT_dev(bpy.types.Panel):
@@ -546,4 +546,4 @@ class MATERIAL_PT_dev(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-        layout.operator(MATERIAL_OP_export_mx_console.bl_idname)
+        layout.operator(MATERIAL_OP_export_console.bl_idname)

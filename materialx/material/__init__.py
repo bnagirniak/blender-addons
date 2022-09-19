@@ -24,8 +24,8 @@ register_classes, unregister_classes = bpy.utils.register_classes_factory([
     ui.MATERIAL_OP_invoke_popup_shader_nodes,
     ui.MATERIAL_OP_remove_node,
     ui.MATERIAL_OP_disconnect_node,
-    ui.MATERIAL_OP_export_mx_file,
-    ui.MATERIAL_OP_export_mx_console,
+    ui.MATERIAL_OP_export_file,
+    ui.MATERIAL_OP_export_console,
     ui.MATERIAL_PT_tools,
     ui.MATERIAL_PT_dev,
 ])
