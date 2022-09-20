@@ -8,9 +8,9 @@ import MaterialX as mx
 
 from ..node_tree import MxNodeTree
 from ..bl_nodes.output import ShaderNodeOutputMaterial
-from ..utils import MX_LIBS_DIR
+from ..utils import MX_LIBS_DIR, mx_properties, get_temp_file, MaterialXProperties, with_prefix
 
-from ..utils import logging, get_temp_file, MaterialXProperties
+from .. import logging
 log = logging.Log('material.properties')
 
 
@@ -18,8 +18,29 @@ class MaterialProperties(MaterialXProperties):
     bl_type = bpy.types.Material
 
     def update_mx_node_tree(self, context):
-        pass
-        #self.update()
+        # trying to show MaterialX area with node tree or Shader area
+
+        material = self.id_data
+        mx_node_tree = mx_properties(material).mx_node_tree
+
+        if not mx_node_tree:
+            return
+
+        screen = context.screen
+        if not hasattr(screen, 'areas'):
+            return
+
+        for window in context.window_manager.windows:
+            for area in window.screen.areas:
+                if area.ui_type not in (MxNodeTree.bl_idname, 'ShaderNodeTree'):
+                    continue
+
+                space = next(s for s in area.spaces if s.type == 'NODE_EDITOR')
+                if space.pin or space.shader_type != 'OBJECT':
+                    continue
+
+                area.ui_type = MxNodeTree.bl_idname
+                space.node_tree = mx_node_tree
 
     mx_node_tree: bpy.props.PointerProperty(type=MxNodeTree, update=update_mx_node_tree)
 
