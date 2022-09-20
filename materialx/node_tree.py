@@ -251,8 +251,6 @@ class MxNodeTree(bpy.types.ShaderNodeTree):
         self.update_()
 
     def update_(self):
-        self.update_links()
-
         for material in bpy.data.materials:
             if utils.mx_properties(material).mx_node_tree and \
                     utils.mx_properties(material).mx_node_tree.name == self.name:
@@ -265,6 +263,11 @@ class MxNodeTree(bpy.types.ShaderNodeTree):
                         if region.type == REGION_TO_UPDATE:
                             region.tag_redraw()
 
+        # We have to call self.update_links via bpy.app.timers.register
+        # to have slight delay after self.update(). It'll be called once
+        bpy.app.timers.register(self.update_links)
+
+    # this is called from Blender
     def update_links(self):
         for link in self.links:
             socket_from_type = link.from_socket.node.nodedef.getOutput(link.from_socket.name).getType()
