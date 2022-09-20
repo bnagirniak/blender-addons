@@ -8,9 +8,9 @@ import MaterialX as mx
 
 from ..node_tree import MxNodeTree
 from ..bl_nodes.output import ShaderNodeOutputMaterial
-from ..utils import MX_LIBS_DIR
+from ..utils import MX_LIBS_DIR, mx_properties, get_temp_file, MaterialXProperties, with_prefix
 
-from ..utils import logging, get_temp_file, MaterialXProperties
+from .. import logging
 log = logging.Log('material.properties')
 
 
@@ -18,7 +18,29 @@ class MaterialProperties(MaterialXProperties):
     bl_type = bpy.types.Material
 
     def update_mx_node_tree(self, context):
-        self.update()
+        # trying to show MaterialX area with node tree or Shader area
+
+        material = self.id_data
+        mx_node_tree = mx_properties(material).mx_node_tree
+
+        if not mx_node_tree:
+            return
+
+        screen = context.screen
+        if not hasattr(screen, 'areas'):
+            return
+
+        for window in context.window_manager.windows:
+            for area in window.screen.areas:
+                if area.ui_type not in (MxNodeTree.bl_idname, 'ShaderNodeTree'):
+                    continue
+
+                space = next(s for s in area.spaces if s.type == 'NODE_EDITOR')
+                if space.pin or space.shader_type != 'OBJECT':
+                    continue
+
+                area.ui_type = MxNodeTree.bl_idname
+                space.node_tree = mx_node_tree
 
     mx_node_tree: bpy.props.PointerProperty(type=MxNodeTree, update=update_mx_node_tree)
 
@@ -33,8 +55,8 @@ class MaterialProperties(MaterialXProperties):
                      node.bl_idname == ShaderNodeOutputMaterial.__name__ and
                      node.is_active_output), None)
 
-    def export(self, obj: bpy.types.Object) -> [mx.Document, None]:
-        if self.mx_node_tree:
+    def export(self, obj: bpy.types.Object, check_mx_node_tree=True) -> [mx.Document, None]:
+        if check_mx_node_tree and self.mx_node_tree:
             return self.mx_node_tree.export()
 
         material = self.id_data
@@ -51,19 +73,7 @@ class MaterialProperties(MaterialXProperties):
 
         return doc
 
-    def update(self, is_depsgraph=False):
-        """
-        Main update callback function, which notifies that material was updated from both:
-        depsgraph or MaterialX node tree
-        """
-        if is_depsgraph and self.mx_node_tree:
-            return
-
-        material = self.id_data
-        # usd_node_tree.material_update(material)
-        # ViewportEngineScene.material_update(material)
-
-    def convert_shader_to_mx(self, obj: bpy.types.Object = None):
+    def convert_to_materialx(self, obj: bpy.types.Object = None):
         mat = self.id_data
         output_node = self.output_node
         if not output_node:
@@ -95,21 +105,12 @@ class MaterialProperties(MaterialXProperties):
             mx.readFromXmlFile(doc, str(mtlx_file), searchPath=search_path)
             mx_node_tree.import_(doc, mtlx_file)
             self.mx_node_tree = mx_node_tree
+
         except Exception as e:
             log.error(traceback.format_exc(), mtlx_file)
             return False
 
         return True
-
-
-def depsgraph_update(depsgraph):
-    if not depsgraph.updates:
-        return
-
-    # Undo operation sends modified object with other stuff (scene, collection, etc...)
-    mat = next((upd.id for upd in depsgraph.updates if isinstance(upd.id, bpy.types.Material)), None)
-    if mat:
-        mat.hdusd.update(True)
 
 
 register, unregister = bpy.utils.register_classes_factory((

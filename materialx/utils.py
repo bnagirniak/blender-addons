@@ -30,12 +30,6 @@ MATLIB_URL = "https://api.matlib.gpuopen.com/api"
 
 TEMP_FOLDER = "bl-materialx"
 
-SUPPORTED_FORMATS = {".png", ".jpeg", ".jpg", ".hdr", ".tga", ".bmp"}
-DEFAULT_FORMAT = ".hdr"
-BLENDER_DEFAULT_FORMAT = "HDR"
-BLENDER_DEFAULT_COLOR_MODE = "RGB"
-READONLY_IMAGE_FORMATS = {".dds"}  # blender can read these formats, but can't write
-
 os.environ['MATERIALX_SEARCH_PATH'] = str(MX_LIBS_DIR)
 
 
@@ -323,13 +317,13 @@ def export_mx_to_file(doc, filepath, *, mx_node_tree=None, is_export_deps=False,
                     dest_path = texture_dir / f"{source_path.stem}{source_path.suffix}"
 
                 shutil.copy(source_path, dest_path)
-                log(f"Export file {source_path} to {dest_path}: completed successfuly")
+                log(f"Export file {source_path} to {dest_path}: completed successfully")
 
             rel_dest_path = dest_path.relative_to(root_dir)
             mx_input.setValue(str(rel_dest_path), mx_input.getType())
 
     mx.writeToXmlFile(doc, filepath)
-    log(f"Export MaterialX to {filepath}: completed successfuly")
+    log(f"Export MaterialX to {filepath}: completed successfully")
 
 
 def temp_dir():
@@ -354,13 +348,14 @@ def get_temp_file(suffix, name=None, is_rand=False):
     return temp_dir() / name
 
 
-def cache_image_file(image: bpy.types.Image, cache_check=True):
-    SUPPORTED_FORMATS = {".png", ".jpeg", ".jpg", ".hdr", ".tga", ".bmp"}
-    DEFAULT_FORMAT = ".hdr"
-    BLENDER_DEFAULT_FORMAT = "HDR"
-    BLENDER_DEFAULT_COLOR_MODE = "RGB"
-    READONLY_IMAGE_FORMATS = {".dds"}  # blender can read these formats, but can't write
+SUPPORTED_FORMATS = {".png", ".jpeg", ".jpg", ".hdr", ".tga", ".bmp"}
+DEFAULT_FORMAT = ".hdr"
+BLENDER_DEFAULT_FORMAT = "HDR"
+BLENDER_DEFAULT_COLOR_MODE = "RGB"
+READONLY_IMAGE_FORMATS = {".dds"}  # blender can read these formats, but can't write
 
+
+def cache_image_file(image: bpy.types.Image, cache_check=True):
     image_path = Path(image.filepath_from_user())
     if not image.packed_file and image.source != 'GENERATED':
         if not image_path.is_file():
@@ -401,6 +396,23 @@ def cache_image_file(image: bpy.types.Image, cache_check=True):
     return temp_path
 
 
+def cache_image_file_path(image_path, cache_check=True):
+    if image_path.suffix.lower() in SUPPORTED_FORMATS:
+        return image_path
+
+    if cache_check:
+        temp_path = get_temp_file(DEFAULT_FORMAT, image_path.name)
+        if temp_path.is_file():
+            return temp_path
+
+    image = bpy.data.images.load(str(image_path))
+    try:
+        return cache_image_file(image, cache_check)
+
+    finally:
+        bpy.data.images.remove(image)
+
+
 def pass_node_reroute(link):
     while isinstance(link.from_node, bpy.types.NodeReroute):
         if not link.from_node.inputs[0].links:
@@ -418,61 +430,3 @@ def update_ui(area_type='PROPERTIES', region_type='WINDOW'):
                 for region in area.regions:
                     if region.type == region_type:
                         region.tag_redraw()
-
-
-def cache_image_file(image: bpy.types.Image, cache_check=True):
-    image_path = Path(image.filepath_from_user())
-    if not image.packed_file and image.source != 'GENERATED':
-        if not image_path.is_file():
-            log.warn("Image is missing", image, image_path)
-            return None
-
-        image_suffix = image_path.suffix.lower()
-
-        if image_suffix in SUPPORTED_FORMATS and\
-                f".{image.file_format.lower()}" in SUPPORTED_FORMATS and not image.is_dirty:
-            return image_path
-
-        if image_suffix in READONLY_IMAGE_FORMATS:
-            return image_path
-
-    temp_path = get_temp_file(DEFAULT_FORMAT, image_path.stem)
-    if cache_check and image.source != 'GENERATED' and temp_path.is_file():
-        return temp_path
-
-    scene = bpy.context.scene
-    user_format = scene.render.image_settings.file_format
-    user_color_mode = scene.render.image_settings.color_mode
-
-    # in some scenes the color_mode is undefined
-    # we can read it but unable to assign back, so switch it to 'RGB' if color_mode isn't selected
-    if not user_color_mode:
-        user_color_mode = 'RGB'
-
-    scene.render.image_settings.file_format = BLENDER_DEFAULT_FORMAT
-    scene.render.image_settings.color_mode = BLENDER_DEFAULT_COLOR_MODE
-
-    try:
-        image.save_render(filepath=str(temp_path))
-    finally:
-        scene.render.image_settings.file_format = user_format
-        scene.render.image_settings.color_mode = user_color_mode
-
-    return temp_path
-
-
-def cache_image_file_path(image_path, cache_check=True):
-    if image_path.suffix.lower() in SUPPORTED_FORMATS:
-        return image_path
-
-    if cache_check:
-        temp_path = get_temp_file(DEFAULT_FORMAT, image_path.name)
-        if temp_path.is_file():
-            return temp_path
-
-    image = bpy.data.images.load(str(image_path))
-    try:
-        return cache_image_file(image, cache_check)
-
-    finally:
-        bpy.data.images.remove(image)
