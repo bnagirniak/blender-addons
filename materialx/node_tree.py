@@ -14,8 +14,6 @@ log = logging.Log('node_tree')
 NODE_LAYER_SEPARATION_WIDTH = 280
 NODE_LAYER_SHIFT_X = 30
 NODE_LAYER_SHIFT_Y = 100
-AREA_TO_UPDATE = 'PROPERTIES'
-REGION_TO_UPDATE = 'WINDOW'
 
 
 class MxNodeTree(bpy.types.ShaderNodeTree):
@@ -256,12 +254,7 @@ class MxNodeTree(bpy.types.ShaderNodeTree):
                     utils.mx_properties(material).mx_node_tree.name == self.name:
                 utils.mx_properties(material).update()
 
-        for window in bpy.context.window_manager.windows:
-            for area in window.screen.areas:
-                if area.type == AREA_TO_UPDATE:
-                    for region in area.regions:
-                        if region.type == REGION_TO_UPDATE:
-                            region.tag_redraw()
+        utils.update_ui()
 
         # We have to call self.update_links via bpy.app.timers.register
         # to have slight delay after self.update(). It'll be called once

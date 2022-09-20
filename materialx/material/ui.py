@@ -58,13 +58,13 @@ class MATERIAL_OP_duplicate_mx_node_tree(bpy.types.Operator):
         return {"FINISHED"}
 
 
-class MATERIAL_OP_convert_shader_to_mx(bpy.types.Operator):
+class MATERIAL_OP_convert_to_materialx(bpy.types.Operator):
     """Converts standard shader node tree to MaterialX node tree for selected material"""
-    bl_idname = utils.with_prefix('material_convert_shader_to_mx')
+    bl_idname = utils.with_prefix('material_convert_to_materialx')
     bl_label = "Convert to MaterialX"
 
     def execute(self, context):
-        if not mx_properties(context.material).convert_shader_to_mx(context.object):
+        if not mx_properties(context.material).convert_to_materialx(context.object):
             return {'CANCELLED'}
 
         return {"FINISHED"}
@@ -131,12 +131,12 @@ class MATERIAL_PT_materialx(bpy.types.Panel):
 
         if mat_materialx.mx_node_tree:
             row.prop(mat_materialx.mx_node_tree, 'name', text="")
-            row.operator(MATERIAL_OP_convert_shader_to_mx.bl_idname, icon='FILE_TICK', text="")
+            row.operator(MATERIAL_OP_convert_to_materialx.bl_idname, icon='FILE_TICK', text="")
             row.operator(MATERIAL_OP_duplicate_mx_node_tree.bl_idname, icon='DUPLICATE')
             row.operator(MATERIAL_OP_unlink_mx_node_tree.bl_idname, icon='X')
 
         else:
-            row.operator(MATERIAL_OP_convert_shader_to_mx.bl_idname, icon='FILE_TICK', text="Convert")
+            row.operator(MATERIAL_OP_convert_to_materialx.bl_idname, icon='FILE_TICK', text="Convert")
             row.operator(MATERIAL_OP_new_mx_node_tree.bl_idname, icon='ADD', text="")
 
 
@@ -465,7 +465,7 @@ class MATERIAL_OP_export_file(bpy.types.Operator, ExportHelper):
     def execute(self, context):
         materialx_prop = mx_properties(context.material)
 
-        if not materialx_prop.convert_shader_to_mx():
+        if not materialx_prop.convert_to_materialx():
             return {'CANCELLED'}
 
         doc = mx_properties(context.material).export(None)
@@ -526,9 +526,22 @@ class MATERIAL_PT_tools(bpy.types.Panel):
         return tree and tree.bl_idname == bpy.types.ShaderNodeTree.__name__
 
     def draw(self, context):
+        mat_materialx = mx_properties(context.material)
         layout = self.layout
 
-        layout.operator(MATERIAL_OP_convert_shader_to_mx.bl_idname, icon='FILE_TICK')
+        row = layout.row(align=True)
+        row.menu(MATERIAL_MT_mx_node_tree.bl_idname, text="", icon='MATERIAL')
+
+        if mat_materialx.mx_node_tree:
+            row.prop(mat_materialx.mx_node_tree, 'name', text="")
+            row.operator(MATERIAL_OP_convert_to_materialx.bl_idname, icon='FILE_TICK', text="")
+            row.operator(MATERIAL_OP_duplicate_mx_node_tree.bl_idname, icon='DUPLICATE')
+            row.operator(MATERIAL_OP_unlink_mx_node_tree.bl_idname, icon='X')
+
+        else:
+            row.operator(MATERIAL_OP_convert_to_materialx.bl_idname, icon='FILE_TICK', text="Convert")
+            row.operator(MATERIAL_OP_new_mx_node_tree.bl_idname, icon='ADD', text="")
+
         layout.operator(MATERIAL_OP_export_file.bl_idname, text="Export MaterialX to file", icon='EXPORT')
 
 

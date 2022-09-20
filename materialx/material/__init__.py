@@ -11,7 +11,7 @@ from . import (
 register_classes, unregister_classes = bpy.utils.register_classes_factory([
     ui.MATERIAL_OP_new_mx_node_tree,
     ui.MATERIAL_OP_duplicate_mx_node_tree,
-    ui.MATERIAL_OP_convert_shader_to_mx,
+    ui.MATERIAL_OP_convert_to_materialx,
     ui.MATERIAL_OP_duplicate_mat_mx_node_tree,
     ui.MATERIAL_OP_link_mx_node_tree,
     ui.MATERIAL_OP_unlink_mx_node_tree,

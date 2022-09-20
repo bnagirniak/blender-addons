@@ -18,7 +18,8 @@ class MaterialProperties(MaterialXProperties):
     bl_type = bpy.types.Material
 
     def update_mx_node_tree(self, context):
-        self.update()
+        pass
+        #self.update()
 
     mx_node_tree: bpy.props.PointerProperty(type=MxNodeTree, update=update_mx_node_tree)
 
@@ -51,19 +52,7 @@ class MaterialProperties(MaterialXProperties):
 
         return doc
 
-    def update(self, is_depsgraph=False):
-        """
-        Main update callback function, which notifies that material was updated from both:
-        depsgraph or MaterialX node tree
-        """
-        if is_depsgraph and self.mx_node_tree:
-            return
-
-        material = self.id_data
-        # usd_node_tree.material_update(material)
-        # ViewportEngineScene.material_update(material)
-
-    def convert_shader_to_mx(self, obj: bpy.types.Object = None):
+    def convert_to_materialx(self, obj: bpy.types.Object = None):
         mat = self.id_data
         output_node = self.output_node
         if not output_node:
@@ -95,21 +84,12 @@ class MaterialProperties(MaterialXProperties):
             mx.readFromXmlFile(doc, str(mtlx_file), searchPath=search_path)
             mx_node_tree.import_(doc, mtlx_file)
             self.mx_node_tree = mx_node_tree
+
         except Exception as e:
             log.error(traceback.format_exc(), mtlx_file)
             return False
 
         return True
-
-
-def depsgraph_update(depsgraph):
-    if not depsgraph.updates:
-        return
-
-    # Undo operation sends modified object with other stuff (scene, collection, etc...)
-    mat = next((upd.id for upd in depsgraph.updates if isinstance(upd.id, bpy.types.Material)), None)
-    if mat:
-        mat.hdusd.update(True)
 
 
 register, unregister = bpy.utils.register_classes_factory((
