@@ -249,11 +249,6 @@ class MxNodeTree(bpy.types.ShaderNodeTree):
         self.update_()
 
     def update_(self):
-        for material in bpy.data.materials:
-            if utils.mx_properties(material).mx_node_tree and \
-                    utils.mx_properties(material).mx_node_tree.name == self.name:
-                utils.mx_properties(material).update()
-
         utils.update_ui()
 
         # We have to call self.update_links via bpy.app.timers.register
