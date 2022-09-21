@@ -32,8 +32,6 @@ MATLIB_URL = "https://api.matlib.gpuopen.com/api"
 
 TEMP_FOLDER = "bl-materialx"
 
-# os.environ['MATERIALX_SEARCH_PATH'] = str(MX_LIBS_DIR)
-
 
 class MaterialXProperties(bpy.types.PropertyGroup):
     bl_type = None
