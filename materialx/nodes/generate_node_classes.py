@@ -277,7 +277,7 @@ from bpy.props import (
 from {ADDON_ALIAS}.nodes.node import MxNode
 
 
-FILE_PATH = r"{file_path}"
+FILE_PATH = "{file_path.as_posix()}"
 """)
 
     doc = mx.createDocument()
@@ -320,11 +320,10 @@ def generate_basic_classes():
         ('USD', "USD", utils.MX_LIBS_DIR / "bxdf/usd_preview_surface.mtlx"),
         ('STD', None, utils.MX_LIBS_DIR / "stdlib/stdlib_defs.mtlx"),
         ('PBR', "PBR", utils.MX_LIBS_DIR / "pbrlib/pbrlib_defs.mtlx"),
-        ('ALG', "Algorithm", utils.MX_LIBS_DIR / "alglib/alglib_defs.mtlx"),
+        ('ALG', "Algorithm", utils.MX_ADDON_LIBS_DIR / "alglib/alglib_defs.mtlx"),
     ]
 
     for prefix, category, file_path in files:
-
         module_name = f"gen_{file_path.name[:-len(file_path.suffix)]}"
         module_file = gen_code_dir / f"{module_name}.py"
 
