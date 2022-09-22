@@ -413,7 +413,7 @@ class MATERIAL_PT_materialx_displacementshader(MATERIAL_PT_materialx_output):
 
 class MATERIAL_OP_export_file(bpy.types.Operator, ExportHelper):
     bl_idname = utils.with_prefix('material_export_file')
-    bl_label = "Export MaterialX"
+    bl_label = "Export to File"
     bl_description = "Export material as MaterialX node tree to .mtlx file"
 
     # region properties
@@ -435,7 +435,7 @@ class MATERIAL_OP_export_file(bpy.types.Operator, ExportHelper):
         default=False
     )
     is_export_textures: bpy.props.BoolProperty(
-        name="Export bound textures",
+        name="Export textures",
         description="Export bound textures to corresponded folder",
         default=True
     )
@@ -444,51 +444,31 @@ class MATERIAL_OP_export_file(bpy.types.Operator, ExportHelper):
         description="Сlean texture folder before export",
         default=False
     )
-    is_clean_deps_folders: bpy.props.BoolProperty(
-        name="Сlean dependencies folders",
-        description="Сlean MaterialX dependencies folders before export",
-        default=False
-    )
     texture_dir_name: bpy.props.StringProperty(
         name="Folder name",
         description="Texture folder name used for exporting files",
         default='textures',
         maxlen=1024,
     )
-    is_create_new_folder: bpy.props.BoolProperty(
-        name="Create new folder",
-        description="Create new folder for material",
-        default=True
-    )
     # endregion
 
     def execute(self, context):
         materialx_prop = mx_properties(context.material)
 
-        if not materialx_prop.convert_to_materialx():
-            return {'CANCELLED'}
-
-        doc = mx_properties(context.material).export(None)
+        doc = materialx_prop.export(None, False)
         if not doc:
             return {'CANCELLED'}
 
-        if self.is_create_new_folder:
-            self.filepath = str(Path(self.filepath).parent / context.material.name_full / Path(self.filepath).name)
-
         utils.export_mx_to_file(doc, self.filepath,
                                 mx_node_tree=None,
-                                is_export_deps=self.is_export_deps,
+                                # is_export_deps=self.is_export_deps,
                                 is_export_textures=self.is_export_textures,
-                                texture_dir_name=self.texture_dir_name,
-                                is_clean_texture_folder=self.is_clean_texture_folder,
-                                is_clean_deps_folders=self.is_clean_deps_folders)
+                                texture_dir_name=self.texture_dir_name)
 
-        bpy.data.node_groups.remove(materialx_prop.mx_node_tree)
         return {'FINISHED'}
 
     def draw(self, context):
-        self.layout.prop(self, 'is_create_new_folder')
-        self.layout.prop(self, 'is_export_deps')
+        # self.layout.prop(self, 'is_export_deps')
 
         col = self.layout.column(align=False)
         col.prop(self, 'is_export_textures')
@@ -542,7 +522,7 @@ class MATERIAL_PT_tools(bpy.types.Panel):
             row.operator(MATERIAL_OP_convert_to_materialx.bl_idname, icon='FILE_TICK', text="Convert")
             row.operator(MATERIAL_OP_new_mx_node_tree.bl_idname, icon='ADD', text="")
 
-        layout.operator(MATERIAL_OP_export_file.bl_idname, text="Export MaterialX to file", icon='EXPORT')
+        layout.operator(MATERIAL_OP_export_file.bl_idname, icon='EXPORT')
 
 
 class MATERIAL_PT_dev(bpy.types.Panel):

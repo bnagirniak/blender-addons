@@ -16,10 +16,12 @@ log = logging.Log('utils')
 
 
 ADDON_ROOT_DIR = Path(__file__).parent
-ADDON_DATA_DIR = Path(bpy.utils.user_resource("SCRIPTS", path=f"addons/{ADDON_ALIAS}_data", create=True))
+ADDON_DATA_DIR = Path(bpy.utils.user_resource('SCRIPTS', path=f"addons/{ADDON_ALIAS}_data", create=True))
+BL_DATA_DIR = Path(bpy.utils.resource_path('LOCAL')) / "datafiles/materialx"
 
 MX_LIBS_FOLDER = "libraries"
-MX_LIBS_DIR = ADDON_ROOT_DIR / MX_LIBS_FOLDER
+MX_LIBS_DIR = BL_DATA_DIR / MX_LIBS_FOLDER
+MX_ADDON_LIBS_DIR = ADDON_ROOT_DIR / MX_LIBS_FOLDER
 
 NODE_CLASSES_FOLDER = "materialx_nodes"
 NODE_CLASSES_DIR = ADDON_DATA_DIR / NODE_CLASSES_FOLDER
@@ -29,8 +31,6 @@ MATLIB_DIR = ADDON_DATA_DIR / MATLIB_FOLDER
 MATLIB_URL = "https://api.matlib.gpuopen.com/api"
 
 TEMP_FOLDER = "bl-materialx"
-
-os.environ['MATERIALX_SEARCH_PATH'] = str(MX_LIBS_DIR)
 
 
 class MaterialXProperties(bpy.types.PropertyGroup):

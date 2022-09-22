@@ -76,26 +76,11 @@ class NODES_OP_export_file(bpy.types.Operator, ExportHelper):
         description="Export bound textures to corresponded folder",
         default=True
     )
-    is_clean_texture_folder: bpy.props.BoolProperty(
-        name="Сlean texture folder",
-        description="Сlean texture folder before export",
-        default=False
-    )
-    is_clean_deps_folders: bpy.props.BoolProperty(
-        name="Сlean MaterialX dependencies folders",
-        description="Сlean MaterialX dependencies folders before export",
-        default=False
-    )
     texture_dir_name: bpy.props.StringProperty(
         name="Texture folder name",
         description="Texture folder name used for exporting files",
         default='textures',
         maxlen=1024
-    )
-    is_create_new_folder: bpy.props.BoolProperty(
-        name="Create new folder",
-        description="Create new folder for material",
-        default=True
     )
     # endregion
 
@@ -106,22 +91,16 @@ class NODES_OP_export_file(bpy.types.Operator, ExportHelper):
             log.warn("Incorrect node tree to export", mx_node_tree)
             return {'CANCELLED'}
 
-        if self.is_create_new_folder:
-            self.filepath = str(Path(self.filepath).parent / mx_node_tree.name_full / Path(self.filepath).name)
-
         utils.export_mx_to_file(doc, self.filepath,
                                 mx_node_tree=mx_node_tree,
-                                is_export_deps=self.is_export_deps,
+                                # is_export_deps=self.is_export_deps,
                                 is_export_textures=self.is_export_textures,
-                                texture_dir_name=self.texture_dir_name,
-                                is_clean_texture_folder=self.is_clean_texture_folder,
-                                is_clean_deps_folders=self.is_clean_deps_folders)
+                                texture_dir_name=self.texture_dir_name)
 
         return {'FINISHED'}
 
     def draw(self, context):
-        self.layout.prop(self, 'is_create_new_folder')
-        self.layout.prop(self, 'is_export_deps')
+        # self.layout.prop(self, 'is_export_deps')
 
         col = self.layout.column(align=False)
         col.prop(self, 'is_export_textures')
