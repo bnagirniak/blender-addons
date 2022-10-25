@@ -73,6 +73,18 @@ class MaterialProperties(MaterialXProperties):
 
         return doc
 
+    def get_materialx_data(self, obj: bpy.types.Object):
+        doc = self.export(obj)
+        if not doc:
+            return None, None
+
+        mat = self.id_data
+        mtlx_file = get_temp_file(".mtlx", f'{mat.name}_{self.mx_node_tree.name if self.mx_node_tree else ""}')
+        mx.writeToXmlFile(doc, str(mtlx_file))
+
+        return mtlx_file, doc
+
+
     def convert_to_materialx(self, obj: bpy.types.Object = None):
         mat = self.id_data
         output_node = self.output_node
