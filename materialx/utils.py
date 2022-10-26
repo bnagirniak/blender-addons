@@ -335,6 +335,20 @@ def temp_dir():
     return d
 
 
+def clear_temp_dir():
+    d = temp_dir()
+    paths = tuple(d.iterdir())
+    if not paths:
+        return
+
+    log("Clearing temp dir", d)
+    for path in paths:
+        if path.is_dir():
+            shutil.rmtree(path, ignore_errors=True)
+        else:
+            os.remove(path)
+
+
 def get_temp_file(suffix, name=None, is_rand=False):
     if not name:
         return Path(tempfile.mktemp(suffix, "tmp", temp_dir()))

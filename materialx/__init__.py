@@ -29,6 +29,7 @@ from . import (
     nodes,
     matlib,
     material,
+    utils,
 )
 
 from . import logging
@@ -52,6 +53,8 @@ def register():
 
 def unregister():
     log("unregister")
+
+    utils.clear_temp_dir()
 
     matlib.unregister()
     material.unregister()
