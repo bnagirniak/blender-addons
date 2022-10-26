@@ -12,7 +12,6 @@ import bpy
 from . import ADDON_ALIAS
 
 from . import logging
-
 log = logging.Log('utils')
 
 ADDON_ROOT_DIR = Path(__file__).parent
