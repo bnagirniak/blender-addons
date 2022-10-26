@@ -84,7 +84,6 @@ class MaterialProperties(MaterialXProperties):
 
         return mtlx_file, doc
 
-
     def convert_to_materialx(self, obj: bpy.types.Object = None):
         mat = self.id_data
         output_node = self.output_node
@@ -109,6 +108,7 @@ class MaterialProperties(MaterialXProperties):
 
         mtlx_file = get_temp_file(".mtlx",
                                   f'{mat.name}_{self.mx_node_tree.name if self.mx_node_tree else ""}')
+
         mx.writeToXmlFile(doc, str(mtlx_file))
         search_path = mx.FileSearchPath(str(mtlx_file.parent))
         search_path.append(str(MX_LIBS_DIR))
