@@ -14,7 +14,6 @@ from . import ADDON_ALIAS
 from . import logging
 log = logging.Log('utils')
 
-
 ADDON_ROOT_DIR = Path(__file__).parent
 ADDON_DATA_DIR = Path(bpy.utils.user_resource('SCRIPTS', path=f"addons/{ADDON_ALIAS}_data", create=True))
 BL_DATA_DIR = Path(bpy.utils.resource_path('LOCAL')) / "datafiles/materialx"
@@ -378,7 +377,7 @@ def cache_image_file(image: bpy.types.Image, cache_check=True):
 
         image_suffix = image_path.suffix.lower()
 
-        if image_suffix in SUPPORTED_FORMATS and\
+        if image_suffix in SUPPORTED_FORMATS and \
                 f".{image.file_format.lower()}" in SUPPORTED_FORMATS and not image.is_dirty:
             return image_path
 
@@ -444,3 +443,32 @@ def update_ui(area_type='PROPERTIES', region_type='WINDOW'):
                 for region in area.regions:
                     if region.type == region_type:
                         region.tag_redraw()
+
+
+def update_materialx_data(depsgraph, materialx_data):
+    from .node_tree import MxNodeTree
+
+    if not depsgraph.updates:
+        return
+
+    for mx_node_tree in (upd.id for upd in depsgraph.updates if isinstance(upd.id, MxNodeTree)):
+        for material in bpy.data.materials:
+            if material.materialx.mx_node_tree and material.materialx.mx_node_tree.name == mx_node_tree.name:
+                doc = material.materialx.export(None)
+                if not doc:
+                    # log.warn("MX export failed", mat)
+                    continue
+
+                matx_data = next((mat for mat in materialx_data if mat[0] == material.name), None)
+
+                if not matx_data:
+                    mx_file = get_temp_file(".mtlx",
+                                            f'{material.name}{material.materialx.mx_node_tree.name if material.materialx.mx_node_tree else ""}',
+                                            False)
+
+                    mx.writeToXmlFile(doc, str(mx_file))
+                    surfacematerial = next((node for node in doc.getNodes()
+                                            if node.getCategory() == 'surfacematerial'))
+                    materialx_data.append((material.name, str(mx_file), surfacematerial.getName()))
+                else:
+                    mx.writeToXmlFile(doc, str(matx_data[1]))
