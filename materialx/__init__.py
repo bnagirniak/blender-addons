@@ -25,7 +25,6 @@ import bpy
 
 from . import (
     preferences,
-    node_tree,
     nodes,
     matlib,
     material,
@@ -37,7 +36,6 @@ log = logging.Log("__init__")
 
 
 register_classes, unregister_classes = bpy.utils.register_classes_factory([
-    node_tree.MxNodeTree,
     preferences.AddonPreferences,
 ])
 

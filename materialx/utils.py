@@ -31,6 +31,10 @@ MATLIB_URL = "https://api.matlib.gpuopen.com/api"
 
 TEMP_FOLDER = "bl-materialx"
 
+NODE_LAYER_SEPARATION_WIDTH = 280
+NODE_LAYER_SHIFT_X = 30
+NODE_LAYER_SHIFT_Y = 100
+
 
 class MaterialXProperties(bpy.types.PropertyGroup):
     bl_type = None
@@ -66,6 +70,8 @@ def code_str(val):
 
 
 def set_param_value(mx_param, val, nd_type, nd_output=None):
+    from .bl_nodes.node_parser import NodeItem
+
     if isinstance(val, mx.Node):
         param_nodegraph = mx_param.getParent().getParent()
         val_nodegraph = val.getParent()
@@ -107,12 +113,20 @@ def set_param_value(mx_param, val, nd_type, nd_output=None):
         else:
             mx_param.setValueString(str(val))
 
+    elif hasattr(val, 'data') and isinstance(val.data, mx.Node):
+        set_param_value(mx_param, val.data, nd_type, nd_output)
+
     else:
         mx_type = getattr(mx, title_str(nd_type), None)
         if mx_type:
-            val = mx_type(val)
-        elif nd_type == 'float' and isinstance(val, tuple):
-            val = val[0]
+            val = mx_type(val.data) if isinstance(val, NodeItem) else mx_type(val)
+
+        elif nd_type == 'float':
+            if isinstance(val, NodeItem):
+                val = val.data
+        
+            if isinstance(val, tuple):
+                val = val[0]
 
         mx_param.setValue(val)
 
@@ -446,12 +460,10 @@ def update_ui(area_type='PROPERTIES', region_type='WINDOW'):
 
 
 def update_materialx_data(depsgraph, materialx_data):
-    from .node_tree import MxNodeTree
-
     if not depsgraph.updates:
         return
 
-    for mx_node_tree in (upd.id for upd in depsgraph.updates if isinstance(upd.id, MxNodeTree)):
+    for mx_node_tree in (upd.id for upd in depsgraph.updates if isinstance(upd.id, bpy.types.ShaderNodeTree)):
         for material in bpy.data.materials:
             if material.materialx.mx_node_tree and material.materialx.mx_node_tree.name == mx_node_tree.name:
                 doc = material.materialx.export(None)
@@ -472,3 +484,170 @@ def update_materialx_data(depsgraph, materialx_data):
                     materialx_data.append((material.name, str(mx_file), surfacematerial.getName()))
                 else:
                     mx.writeToXmlFile(doc, str(matx_data[1]))
+
+
+def import_materialx_from_file(node_tree, doc: mx.Document, file_path):
+    def prepare_for_import():
+        surfacematerial = next(
+            (n for n in doc.getNodes() if n.getCategory() == 'surfacematerial'), None)
+        if surfacematerial:
+            return
+
+        mat = doc.getMaterials()[0]
+        sr = mat.getShaderRefs()[0]
+
+        doc.removeMaterial(mat.getName())
+
+        node_name = sr.getName()
+        if not node_name.startswith("SR_"):
+            node_name = f"SR_{node_name}"
+        node = doc.addNode(sr.getNodeString(), node_name, 'surfaceshader')
+        for sr_input in sr.getBindInputs():
+            input = node.addInput(sr_input.getName(), sr_input.getType())
+            ng_name = sr_input.getNodeGraphString()
+            if ng_name:
+                input.setAttribute('nodegraph', ng_name)
+                input.setAttribute('output', sr_input.getOutputString())
+            else:
+                input.setValue(sr_input.getValue())
+
+        surfacematerial = doc.addNode('surfacematerial', mat.getName(), 'material')
+        input = surfacematerial.addInput('surfaceshader', node.getType())
+        input.setNodeName(node.getName())
+
+    def do_import():
+        from .nodes import get_mx_node_cls
+
+        node_tree.nodes.clear()
+
+        def import_node(mx_node, mx_output_name=None, look_nodedef=True):
+            mx_nodegraph = mx_node.getParent()
+            node_path = mx_node.getNamePath()
+            file_prefix = get_file_prefix(mx_node, file_path)
+
+            if node_path in node_tree.nodes:
+                return node_tree.nodes[node_path]
+
+            try:
+                MxNode_cls, data_type = get_mx_node_cls(mx_node)
+
+            except KeyError as e:
+                if not look_nodedef:
+                    log.warn(e)
+                    return None
+
+                # looking for nodedef and switching to another nodegraph defined in doc
+                nodedef = next(nd for nd in doc.getNodeDefs()
+                               if nd.getNodeString() == mx_node.getCategory() and
+                               nd.getType() == mx_node.getType())
+                new_mx_nodegraph = next(ng for ng in doc.getNodeGraphs()
+                                        if ng.getNodeDefString() == nodedef.getName())
+
+                mx_output = new_mx_nodegraph.getOutput(mx_output_name)
+                node_name = mx_output.getNodeName()
+                new_mx_node = new_mx_nodegraph.getNode(node_name)
+
+                return import_node(new_mx_node, None, False)
+
+            node = node_tree.nodes.new(MxNode_cls.bl_idname)
+            node.name = node_path
+            node.data_type = data_type
+            nodedef = node.nodedef
+
+            for mx_input in mx_node.getInputs():
+                input_name = mx_input.getName()
+                nd_input = nodedef.getInput(input_name)
+                if nd_input.getAttribute('uniform') == 'true':
+                    node.set_param_value(input_name, parse_value(
+                        node, mx_input.getValue(), mx_input.getType(), file_prefix))
+                    continue
+
+                if input_name not in node.inputs:
+                    log.error(f"Incorrect input name '{input_name}' for node {node}")
+                    continue
+
+                val = mx_input.getValue()
+                if val is not None:
+                    node.set_input_value(input_name, parse_value(
+                        node, val, mx_input.getType(), file_prefix))
+                    continue
+
+                node_name = mx_input.getNodeName()
+
+                if node_name:
+                    new_mx_node = mx_nodegraph.getNode(node_name)
+                    if not new_mx_node:
+                        log.error(f"Couldn't find node '{node_name}' in nodegraph '{mx_nodegraph.getNamePath()}'")
+                        continue
+
+                    new_node = import_node(new_mx_node)
+
+                    out_name = mx_input.getAttribute('output')
+                    if len(new_node.nodedef.getOutputs()) > 1 and out_name:
+                        new_node_output = new_node.outputs[out_name]
+                    else:
+                        new_node_output = new_node.outputs[0]
+
+                    node_tree.links.new(new_node_output, node.inputs[input_name])
+                    continue
+
+                new_nodegraph_name = mx_input.getAttribute('nodegraph')
+                if new_nodegraph_name:
+                    mx_output_name = mx_input.getAttribute('output')
+                    new_mx_nodegraph = mx_nodegraph.getNodeGraph(new_nodegraph_name)
+                    mx_output = new_mx_nodegraph.getOutput(mx_output_name)
+                    node_name = mx_output.getNodeName()
+                    new_mx_node = new_mx_nodegraph.getNode(node_name)
+                    new_node = import_node(new_mx_node, mx_output_name)
+                    if not new_node:
+                        continue
+
+                    out_name = mx_output.getAttribute('output')
+                    if len(new_node.nodedef.getOutputs()) > 1 and out_name:
+                        new_node_output = new_node.outputs[out_name]
+                    else:
+                        new_node_output = new_node.outputs[0]
+
+                    node_tree.links.new(new_node_output, node.inputs[input_name])
+                    continue
+
+            node.check_ui_folders()
+            return node
+
+        mx_node = next(n for n in doc.getNodes() if n.getCategory() == 'surfacematerial')
+        output_node = import_node(mx_node, 0)
+
+        if not output_node:
+            return
+
+        # arranging nodes by layers
+        layer = {output_node}
+        layer_index = 0
+        layers = {}
+        while layer:
+            new_layer = set()
+            for node in layer:
+                layers[node] = layer_index
+                for inp in node.inputs:
+                    for link in inp.links:
+                        new_layer.add(link.from_node)
+            layer = new_layer
+            layer_index += 1
+
+        node_layers = [[] for _ in range(max(layers.values()) + 1)]
+        for node in node_tree.nodes:
+            node_layers[layers[node]].append(node)
+
+        # placing nodes by layers
+        loc_x = 0
+        for i, nodes in enumerate(node_layers):
+            loc_y = 0
+            for node in nodes:
+                node.location = (loc_x, loc_y)
+                loc_y -= NODE_LAYER_SHIFT_Y
+                loc_x -= NODE_LAYER_SHIFT_X
+
+            loc_x -= NODE_LAYER_SEPARATION_WIDTH
+
+    prepare_for_import()
+    do_import()

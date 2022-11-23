@@ -9,7 +9,6 @@ import MaterialX as mx
 import bpy
 from bpy_extras.io_utils import ImportHelper, ExportHelper
 
-from ..node_tree import MxNodeTree
 from .. import utils
 from ..preferences import addon_preferences
 
@@ -112,72 +111,3 @@ class NODES_OP_export_file(bpy.types.Operator, ExportHelper):
     @staticmethod
     def enabled(context):
         return bool(context.space_data.edit_tree.output_node)
-
-
-class NODES_OP_export_console(bpy.types.Operator):
-    bl_idname = utils.with_prefix('nodes_export_console')
-    bl_label = "Export to Console"
-    bl_description = "Export MaterialX node tree to console"
-
-    def execute(self, context):
-        mx_node_tree = context.space_data.edit_tree
-        doc = mx_node_tree.export()
-        if not doc:
-            log.warn("Incorrect node tree to export", mx_node_tree)
-            return {'CANCELLED'}
-
-        print(mx.writeToXmlString(doc))
-        return {'FINISHED'}
-
-    @staticmethod
-    def enabled(context):
-        return bool(context.space_data.edit_tree.output_node)
-
-
-class NODES_OP_create_basic_nodes(bpy.types.Operator):
-    bl_idname = utils.with_prefix("nodes_create_basic_nodes")
-    bl_label = "Create Basic Nodes"
-    bl_description = "Create basic MaterialX nodes"
-
-    def execute(self, context):
-        mx_node_tree = context.space_data.edit_tree
-        mx_node_tree.create_basic_nodes()
-        return {'FINISHED'}
-
-
-class NODES_PT_tools(bpy.types.Panel):
-    bl_idname = utils.with_prefix('NODES_PT_tools', '_', True)
-    bl_label = "MaterialX Tools"
-    bl_space_type = 'NODE_EDITOR'
-    bl_region_type = 'UI'
-    bl_category = "Tool"
-
-    @classmethod
-    def poll(cls, context):
-        tree = context.space_data.edit_tree
-        return tree and tree.bl_idname == MxNodeTree.bl_idname
-
-    def draw(self, context):
-        layout = self.layout
-
-        layout.operator(NODES_OP_create_basic_nodes.bl_idname, icon='ADD')
-        layout.operator(NODES_OP_import_file.bl_idname, icon='IMPORT')
-        layout.operator(NODES_OP_export_file.bl_idname, icon='EXPORT')
-
-
-class NODES_PT_dev(bpy.types.Panel):
-    bl_idname = utils.with_prefix('NODES_PT_dev', '_', True)
-    bl_parent_id = NODES_PT_tools.bl_idname
-    bl_label = "Dev"
-    bl_space_type = 'NODE_EDITOR'
-    bl_region_type = 'UI'
-
-    @classmethod
-    def poll(cls, context):
-        preferences = addon_preferences()
-        return preferences.dev_tools if preferences else True
-
-    def draw(self, context):
-        layout = self.layout
-
-        layout.operator(NODES_OP_export_console.bl_idname)

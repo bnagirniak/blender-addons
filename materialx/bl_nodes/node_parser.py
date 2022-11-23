@@ -9,6 +9,7 @@ import MaterialX as mx
 from .. import utils
 from ..utils import pass_node_reroute
 from ..nodes import get_mx_node_cls
+from ..nodes.node import MxNode
 
 from .. import logging
 log = logging.Log("bl_nodes.node_parser")
@@ -354,7 +355,11 @@ class NodeParser:
         if not link:
             return None
 
-        return self._export_node(link.from_node, link.from_socket.identifier, link.to_socket)
+        if isinstance(link.from_node, MxNode):
+            mx_node = link.from_node.compute(link.from_socket.name, doc=self.doc)
+            return mx_node
+
+        return self._export_node(link.from_node, link.from_socket.name, link.to_socket)
 
     def get_input_value(self, in_key):
         """ Returns linked node or default socket value """

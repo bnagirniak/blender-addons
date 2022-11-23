@@ -3,33 +3,19 @@
 
 from pathlib import Path
 
+import traceback
 import MaterialX as mx
 
 import bpy
-from bpy_extras.io_utils import ExportHelper
+from bpy_extras.io_utils import ImportHelper, ExportHelper
 
-from ..node_tree import MxNodeTree, NODE_LAYER_SEPARATION_WIDTH
 from ..nodes.node import is_mx_node_valid
 from .. import utils
-from ..utils import pass_node_reroute, title_str, mx_properties
+from ..utils import pass_node_reroute, title_str, mx_properties, import_materialx_from_file, NODE_LAYER_SEPARATION_WIDTH
 from ..preferences import addon_preferences
 
 from ..utils import logging
 log = logging.Log(tag='material.ui')
-
-
-class MATERIAL_OP_new_mx_node_tree(bpy.types.Operator):
-    """Create new MaterialX node tree for selected material"""
-    bl_idname = utils.with_prefix('material_new_mx_node_tree')
-    bl_label = "New"
-
-    def execute(self, context):
-        mat = context.material
-        mx_node_tree = bpy.data.node_groups.new(f"MX_{mat.name}", type=MxNodeTree.bl_idname)
-        mx_node_tree.create_basic_nodes()
-
-        mx_properties(mat).mx_node_tree = mx_node_tree
-        return {"FINISHED"}
 
 
 class MATERIAL_OP_duplicate_mat_mx_node_tree(bpy.types.Operator):
@@ -58,18 +44,6 @@ class MATERIAL_OP_duplicate_mx_node_tree(bpy.types.Operator):
         return {"FINISHED"}
 
 
-class MATERIAL_OP_convert_to_materialx(bpy.types.Operator):
-    """Converts standard shader node tree to MaterialX node tree for selected material"""
-    bl_idname = utils.with_prefix('material_convert_to_materialx')
-    bl_label = "Convert to MaterialX"
-
-    def execute(self, context):
-        if not mx_properties(context.material).convert_to_materialx(context.object):
-            return {'CANCELLED'}
-
-        return {"FINISHED"}
-
-
 class MATERIAL_OP_link_mx_node_tree(bpy.types.Operator):
     """Link MaterialX node tree to selected material"""
     bl_idname = utils.with_prefix('material_link_mx_node_tree')
@@ -90,54 +64,6 @@ class MATERIAL_OP_unlink_mx_node_tree(bpy.types.Operator):
     def execute(self, context):
         mx_properties(context.material).mx_node_tree = None
         return {"FINISHED"}
-
-
-class MATERIAL_MT_mx_node_tree(bpy.types.Menu):
-    bl_idname = utils.with_prefix('MATERIAL_MT_mx_node_tree', '_', True)
-    bl_label = "MX Nodetree"
-
-    def draw(self, context):
-        layout = self.layout
-        node_groups = bpy.data.node_groups
-
-        for ng in node_groups:
-            if ng.bl_idname != utils.with_prefix('MxNodeTree'):
-                continue
-
-            row = layout.row()
-            row.enabled = bool(ng.output_node)
-            op = row.operator(MATERIAL_OP_link_mx_node_tree.bl_idname,
-                              text=ng.name, icon='MATERIAL')
-            op.mx_node_tree_name = ng.name
-
-
-class MATERIAL_PT_materialx(bpy.types.Panel):
-    bl_idname = utils.with_prefix("MATERIAL_PT_materialx", '_', True)
-    bl_label = "MaterialX"
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_context = "material"
-
-    @classmethod
-    def poll(cls, context):
-        return context.material
-
-    def draw(self, context):
-        mat_materialx = mx_properties(context.material)
-        layout = self.layout
-
-        row = layout.row(align=True)
-        row.menu(MATERIAL_MT_mx_node_tree.bl_idname, text="", icon='MATERIAL')
-
-        if mat_materialx.mx_node_tree:
-            row.prop(mat_materialx.mx_node_tree, 'name', text="")
-            row.operator(MATERIAL_OP_convert_to_materialx.bl_idname, icon='FILE_TICK', text="")
-            row.operator(MATERIAL_OP_duplicate_mx_node_tree.bl_idname, icon='DUPLICATE')
-            row.operator(MATERIAL_OP_unlink_mx_node_tree.bl_idname, icon='X')
-
-        else:
-            row.operator(MATERIAL_OP_convert_to_materialx.bl_idname, icon='FILE_TICK', text="Convert")
-            row.operator(MATERIAL_OP_new_mx_node_tree.bl_idname, icon='ADD', text="")
 
 
 class MATERIAL_OP_link_mx_node(bpy.types.Operator):
@@ -336,79 +262,35 @@ class MATERIAL_OP_disconnect_node(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class MATERIAL_PT_materialx_output(bpy.types.Panel):
-    bl_label = ""
-    bl_parent_id = MATERIAL_PT_materialx.bl_idname
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
+class MATERIAL_OP_import_file(bpy.types.Operator, ImportHelper):
+    bl_idname = utils.with_prefix('nodes_import_file')
+    bl_label = "Import from File"
+    bl_description = "Import MaterialX node tree from .mtlx file"
 
-    out_key = ""
+    filename_ext = ".mtlx"
+    filepath: bpy.props.StringProperty(
+        name="File Path",
+        description="File path used for importing MaterialX node tree from .mtlx file",
+        maxlen=1024, subtype="FILE_PATH"
+    )
+    filter_glob: bpy.props.StringProperty(default="*.mtlx", options={'HIDDEN'}, )
 
-    @classmethod
-    def poll(cls, context):
-        return bool(mx_properties(context.material).mx_node_tree)
+    def execute(self, context):
+        mx_node_tree = context.space_data.edit_tree
+        mtlx_file = Path(self.filepath)
 
-    def draw(self, context):
-        layout = self.layout
+        doc = mx.createDocument()
+        search_path = mx.FileSearchPath(str(mtlx_file.parent))
+        search_path.append(str(utils.MX_LIBS_DIR))
+        try:
+            mx.readFromXmlFile(doc, str(mtlx_file))
+            import_materialx_from_file(mx_node_tree, doc, mtlx_file)
 
-        node_tree = mx_properties(context.material).mx_node_tree
-        output_node = node_tree.output_node
-        if not output_node:
-            layout.label(text="No output node")
-            return
+        except Exception as e:
+            log.error(traceback.format_exc(), mtlx_file)
+            return {'CANCELLED'}
 
-        input = output_node.inputs[self.out_key]
-        link = next((link for link in input.links if link.is_valid), None)
-
-        split = layout.split(factor=0.4)
-        row = split.row(align=True)
-        row.alignment = 'RIGHT'
-        row.label(text='Surface')
-
-        row = split.row(align=True)
-        box = row.box()
-        box.scale_x = 0.7
-        box.scale_y = 0.5
-        op = box.operator(MATERIAL_OP_invoke_popup_shader_nodes.bl_idname, icon='HANDLETYPE_AUTO_CLAMP_VEC')
-        op.input_num = output_node.inputs.find(self.out_key)
-
-        if link and is_mx_node_valid(link.from_node):
-            row.prop(link.from_node, 'name', text="")
-        else:
-            box = row.box()
-            box.scale_y = 0.5
-            box.label(text='None')
-
-        row.label(icon='BLANK1')
-
-        if not link:
-            return
-
-        if not is_mx_node_valid(link.from_node):
-            layout.label(text="Unsupported node")
-            return
-
-        link = pass_node_reroute(link)
-        if not link:
-            return
-
-        layout.separator()
-        link.from_node.draw_node_view(context, layout)
-
-
-class MATERIAL_PT_materialx_surfaceshader(MATERIAL_PT_materialx_output):
-    bl_idname = utils.with_prefix('MATERIAL_PT_materialx_surfaceshader', '_', True)
-    bl_label = "Surface Shader"
-
-    out_key = 'surfaceshader'
-
-
-class MATERIAL_PT_materialx_displacementshader(MATERIAL_PT_materialx_output):
-    bl_idname = utils.with_prefix('MATERIAL_PT_materialx_displacementshader', '_', True)
-    bl_label = "Displacement Shader"
-    bl_options = {'DEFAULT_CLOSED'}
-
-    out_key = 'displacementshader'
+        return {'FINISHED'}
 
 
 class MATERIAL_OP_export_file(bpy.types.Operator, ExportHelper):
@@ -506,22 +388,9 @@ class MATERIAL_PT_tools(bpy.types.Panel):
         return tree and tree.bl_idname == bpy.types.ShaderNodeTree.__name__
 
     def draw(self, context):
-        mat_materialx = mx_properties(context.material)
         layout = self.layout
 
-        row = layout.row(align=True)
-        row.menu(MATERIAL_MT_mx_node_tree.bl_idname, text="", icon='MATERIAL')
-
-        if mat_materialx.mx_node_tree:
-            row.prop(mat_materialx.mx_node_tree, 'name', text="")
-            row.operator(MATERIAL_OP_convert_to_materialx.bl_idname, icon='FILE_TICK', text="")
-            row.operator(MATERIAL_OP_duplicate_mx_node_tree.bl_idname, icon='DUPLICATE')
-            row.operator(MATERIAL_OP_unlink_mx_node_tree.bl_idname, icon='X')
-
-        else:
-            row.operator(MATERIAL_OP_convert_to_materialx.bl_idname, icon='FILE_TICK', text="Convert")
-            row.operator(MATERIAL_OP_new_mx_node_tree.bl_idname, icon='ADD', text="")
-
+        layout.operator(MATERIAL_OP_import_file.bl_idname, icon='IMPORT')
         layout.operator(MATERIAL_OP_export_file.bl_idname, icon='EXPORT')
 
 

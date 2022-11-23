@@ -9,10 +9,9 @@ import MaterialX as mx
 import bpy
 
 from .. import utils
-from ..node_tree import MxNodeTree
 from .manager import manager
 
-from ..utils import logging
+from ..utils import logging, import_materialx_from_file
 log = logging.Log('matlib.ui')
 
 
@@ -49,11 +48,11 @@ class MATLIB_OP_import_material(bpy.types.Operator):
 
         # getting/creating MxNodeTree
         bl_material = context.material
-        mx_node_tree = utils.mx_properties(bl_material).mx_node_tree
+        mx_node_tree = bl_material.node_tree
         if not mx_node_tree:
             mx_node_tree = bpy.data.node_groups.new(f"MX_{bl_material.name}",
-                                                    type=MxNodeTree.bl_idname)
-            utils.mx_properties(bl_material).mx_node_tree = mx_node_tree
+                                                    type=bpy.types.ShaderNodeTree.__name__)
+            bl_material.node_tree = mx_node_tree
 
         log(f"Reading: {mtlx_file}")
         doc = mx.createDocument()
@@ -61,7 +60,7 @@ class MATLIB_OP_import_material(bpy.types.Operator):
         search_path.append(str(utils.MX_LIBS_DIR))
         try:
             mx.readFromXmlFile(doc, str(mtlx_file), searchPath=search_path)
-            mx_node_tree.import_(doc, mtlx_file)
+            import_materialx_from_file(mx_node_tree, doc, mtlx_file)
 
         except Exception as e:
             log.error(traceback.format_exc(), mtlx_file)
