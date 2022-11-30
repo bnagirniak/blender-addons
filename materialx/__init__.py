@@ -26,7 +26,6 @@ import bpy
 from . import (
     preferences,
     nodes,
-    matlib,
     material,
     utils,
 )
@@ -46,7 +45,6 @@ def register():
     register_classes()
     nodes.register()
     material.register()
-    matlib.register()
 
 
 def unregister():
@@ -54,7 +52,6 @@ def unregister():
 
     utils.clear_temp_dir()
 
-    matlib.unregister()
     material.unregister()
     nodes.unregister()
     unregister_classes()

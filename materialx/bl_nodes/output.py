@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 # Copyright 2022, AMD
-import MaterialX
+import MaterialX as mx
 
 from .node_parser import NodeParser, Id, log
 
@@ -16,7 +16,7 @@ class ShaderNodeOutputMaterial(NodeParser):
         if surface is None:
             return None
 
-        linked_input_type = surface.getType() if isinstance(surface, MaterialX.Node) else surface.type
+        linked_input_type = surface.getType() if isinstance(surface, mx.Node) else surface.type
 
         if linked_input_type != 'surfaceshader':
             log.warn("Incorrect node tree to export: output node doesn't have correct input")

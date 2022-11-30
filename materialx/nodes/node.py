@@ -157,6 +157,7 @@ class MxNode(bpy.types.ShaderNode):
 
     def draw_buttons(self, context, layout):
         is_prop_area = context.area.type == 'PROPERTIES'
+
         if len(self._data_types) > 1:
             layout1 = layout
             if is_prop_area:
@@ -177,8 +178,9 @@ class MxNode(bpy.types.ShaderNode):
                     r = col.row(align=True)
                 r.prop(self, self._folder_prop_name(f), toggle=True)
 
-        for nd_input in utils.get_nodedef_inputs(nodedef, True):
+        for nd_input in utils.get_nodedef_inputs(nodedef, False):
             f = nd_input.getAttribute('uifolder')
+
             if f and not getattr(self, self._folder_prop_name(f)):
                 continue
 
@@ -200,82 +202,6 @@ class MxNode(bpy.types.ShaderNode):
                     col = layout1.column()
                     layout1 = layout1.column()
                 layout1.prop(self, self._input_prop_name(name))
-
-    def draw_node_view(self, context, layout):
-        from ..material.ui import MATERIAL_OP_invoke_popup_input_nodes
-        layout.use_property_split = True
-        layout.use_property_decorate = True
-        self.draw_buttons(context, layout)
-
-        for i, socket_in in enumerate(self.inputs):
-            nd = self.nodedef
-            uiname = utils.get_attr(nd.getInput(socket_in.name), 'uiname',
-                                    utils.title_str(nd.getInput(socket_in.name).getName()))
-            if socket_in.is_linked:
-                link = next((link for link in socket_in.links if link.is_valid), None)
-                if not link:
-                    continue
-
-                link = utils.pass_node_reroute(link)
-                if not link or isinstance(link.from_node, bpy.types.NodeReroute):
-                    continue
-
-                split = layout.split(factor=0.4)
-                split_1 = split.split(factor=0.4)
-
-                row = split_1.row()
-                row.use_property_split = False
-                row.use_property_decorate = False
-                row.alignment = 'LEFT'
-                row.prop(socket_in, "show_expanded",
-                         icon="DISCLOSURE_TRI_DOWN" if socket_in.show_expanded else "DISCLOSURE_TRI_RIGHT",
-                         icon_only=True, emboss=False)
-                row = split_1.row()
-                row.alignment = 'RIGHT'
-                row.label(text=uiname)
-                row = split.row(align=True)
-                row.use_property_decorate = False
-
-                box = row.box()
-                box.scale_x = 0.7
-                box.scale_y = 0.5
-                box.emboss = 'NONE_OR_STATUS'
-
-                op = box.operator(MATERIAL_OP_invoke_popup_input_nodes.bl_idname, icon='HANDLETYPE_AUTO_CLAMP_VEC')
-                op.input_num = i
-                op.current_node_name = self.name
-
-                row.prop(link.from_node, 'name', text='')
-                row.label(icon='BLANK1')
-
-                if socket_in.show_expanded:
-                    link.from_node.draw_node_view(context, layout)
-
-            else:
-                mx_input = self.nodedef.getInput(socket_in.name)
-                f = mx_input.getAttribute('uifolder')
-                is_draw = True
-                if f:
-                    if not getattr(self, self._folder_prop_name(f)):
-                        is_draw = False
-
-                if is_draw:
-                    split = layout.split(factor=0.4)
-
-                    row = split.row(align=True)
-                    row.alignment = 'RIGHT'
-                    row.label(text=uiname)
-                    row = split.row(align=True)
-                    box = row.box()
-                    box.scale_x = 0.7
-                    box.scale_y = 0.5
-
-                    op = box.operator(MATERIAL_OP_invoke_popup_input_nodes.bl_idname,
-                                      icon='HANDLETYPE_AUTO_CLAMP_VEC')
-                    op.input_num = i
-                    op.current_node_name = self.name
-
-                    socket_in.draw(context, row, self, '')
 
     # COMPUTE FUNCTION
     def compute(self, out_key, **kwargs):
@@ -427,7 +353,7 @@ class MxNode(bpy.types.ShaderNode):
 
     @classmethod
     def poll(cls, tree):
-        return tree.bl_idname == bpy.types.ShaderNodeTree.__name__
+        return tree.bl_idname == 'ShaderNodeTree'
 
     def update_ui_folders(self, context):
         for i, nd_input in enumerate(utils.get_nodedef_inputs(self.nodedef, False)):

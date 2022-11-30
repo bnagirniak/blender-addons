@@ -36,26 +36,6 @@ NODE_LAYER_SHIFT_X = 30
 NODE_LAYER_SHIFT_Y = 100
 
 
-class MaterialXProperties(bpy.types.PropertyGroup):
-    bl_type = None
-
-    @classmethod
-    def register(cls):
-        setattr(cls.bl_type, ADDON_ALIAS, bpy.props.PointerProperty(
-            name="MaterialX properties",
-            description="MaterialX properties",
-            type=cls,
-        ))
-
-    @classmethod
-    def unregister(cls):
-        delattr(cls.bl_type, ADDON_ALIAS)
-
-
-def mx_properties(obj):
-    return getattr(obj, ADDON_ALIAS)
-
-
 def with_prefix(name, separator='.', upper=False):
     return f"{ADDON_ALIAS.upper() if upper else ADDON_ALIAS}{separator}{name}"
 
@@ -463,10 +443,10 @@ def update_materialx_data(depsgraph, materialx_data):
     if not depsgraph.updates:
         return
 
-    for mx_node_tree in (upd.id for upd in depsgraph.updates if isinstance(upd.id, bpy.types.ShaderNodeTree)):
+    for node_tree in (upd.id for upd in depsgraph.updates if isinstance(upd.id, bpy.types.ShaderNodeTree)):
         for material in bpy.data.materials:
-            if material.materialx.mx_node_tree and material.materialx.mx_node_tree.name == mx_node_tree.name:
-                doc = material.materialx.export(None)
+            if material.node_tree and material.node_tree.name == node_tree.name:
+                doc = export(material, None)
                 if not doc:
                     # log.warn("MX export failed", mat)
                     continue
@@ -475,7 +455,7 @@ def update_materialx_data(depsgraph, materialx_data):
 
                 if not matx_data:
                     mx_file = get_temp_file(".mtlx",
-                                            f'{material.name}{material.materialx.mx_node_tree.name if material.materialx.mx_node_tree else ""}',
+                                            f'{material.name}{material.node_tree.name if material.node_tree else ""}',
                                             False)
 
                     mx.writeToXmlFile(doc, str(mx_file))
@@ -651,3 +631,56 @@ def import_materialx_from_file(node_tree, doc: mx.Document, file_path):
 
     prepare_for_import()
     do_import()
+
+
+def export(material, obj: bpy.types.Object) -> [mx.Document, None]:
+    from .bl_nodes.output import ShaderNodeOutputMaterial
+    from .nodes.node import MxNode
+
+    output_node = get_output_node(material)
+
+    if not output_node:
+        return None
+
+    doc = mx.createDocument()
+
+    if isinstance(output_node, MxNode):
+        mx_node = output_node.compute('out', doc=doc)
+        return doc
+
+    node_parser = ShaderNodeOutputMaterial(doc, material, output_node, obj)
+    if not node_parser.export():
+        return None
+
+    return doc
+
+
+def get_materialx_data(material, obj: bpy.types.Object):
+    doc = export(obj)
+    if not doc:
+        return None, None
+
+    mtlx_file = get_temp_file(".mtlx", f'{material.name}_{material.node_tree.name if material.node_tree else ""}')
+    mx.writeToXmlFile(doc, str(mtlx_file))
+
+    return mtlx_file, doc
+
+
+def get_output_node(material):
+    from .bl_nodes.output import ShaderNodeOutputMaterial
+
+    if not material.node_tree:
+        return None
+
+    bl_output_node = next((node for node in material.node_tree.nodes if
+                 node.bl_idname == ShaderNodeOutputMaterial.__name__ and
+                 node.is_active_output and node.inputs['Surface'].links), None)
+
+    if bl_output_node:
+        return bl_output_node
+
+    mx_output_node = next((node for node in material.node_tree.nodes if
+                 node.bl_idname == with_prefix('MxNode_STD_surfacematerial') and
+                 node.inputs['surfaceshader'].links), None)
+
+    return mx_output_node

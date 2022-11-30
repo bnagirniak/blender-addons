@@ -7,7 +7,7 @@ import bpy
 import nodeitems_utils
 import sys
 
-from . import node, categories, generate_node_classes, ui
+from . import node, categories, generate_node_classes
 from .. import utils
 
 

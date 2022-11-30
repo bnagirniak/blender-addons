@@ -2,7 +2,7 @@
 # Copyright 2022, AMD
 
 import math
-import MaterialX
+import MaterialX as mx
 
 from .node_parser import NodeParser
 from . import log
@@ -16,7 +16,7 @@ def enabled(val):
     if val is None:
         return False
 
-    if isinstance(val, MaterialX.Node):
+    if isinstance(val, mx.Node):
         return True
 
     if isinstance(val.data, float) and math.isclose(val.data, 0.0):

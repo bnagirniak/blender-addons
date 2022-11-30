@@ -13,7 +13,7 @@ from ..utils import title_str, code_str, with_prefix
 class MxNodeCategory(NodeCategory):
     @classmethod
     def poll(cls, context):
-        return context.space_data.tree_type == bpy.types.ShaderNodeTree.__name__
+        return context.space_data.tree_type == 'ShaderNodeTree'
 
 
 def get_node_categories():
