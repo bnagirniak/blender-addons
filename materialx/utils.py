@@ -35,6 +35,7 @@ NODE_LAYER_SEPARATION_WIDTH = 280
 NODE_LAYER_SHIFT_X = 30
 NODE_LAYER_SHIFT_Y = 100
 
+MTLX_DOC = {}
 
 def with_prefix(name, separator='.', upper=False):
     return f"{ADDON_ALIAS.upper() if upper else ADDON_ALIAS}{separator}{name}"
@@ -74,7 +75,7 @@ def set_param_value(mx_param, val, nd_type, nd_output=None):
             if nd_output:
                 mx_output_name += f'_{nd_output.getName()}'
 
-            mx_output = val_nodegraph.getOutput(mx_output_name)
+            mx_output = val_nodegraph.getActiveOutput(mx_output_name)
             if not mx_output:
                 mx_output = val_nodegraph.addOutput(mx_output_name, val.getType())
                 mx_output.setNodeName(node_name)
@@ -182,7 +183,7 @@ def parse_value_str(val_str, mx_type, *, first_only=False, is_enum=False):
 
 
 def get_nodedef_inputs(nodedef, uniform=None):
-    for nd_input in nodedef.getInputs():
+    for nd_input in nodedef.getActiveInputs():
         if (uniform is True and nd_input.getAttribute('uniform') != 'true') or \
                 (uniform is False and nd_input.getAttribute('uniform') == 'true'):
             continue
@@ -523,7 +524,7 @@ def import_materialx_from_file(node_tree, doc: mx.Document, file_path):
                 new_mx_nodegraph = next(ng for ng in doc.getNodeGraphs()
                                         if ng.getNodeDefString() == nodedef.getName())
 
-                mx_output = new_mx_nodegraph.getOutput(mx_output_name)
+                mx_output = new_mx_nodegraph.getActiveOutput(mx_output_name)
                 node_name = mx_output.getNodeName()
                 new_mx_node = new_mx_nodegraph.getNode(node_name)
 
@@ -534,9 +535,9 @@ def import_materialx_from_file(node_tree, doc: mx.Document, file_path):
             node.data_type = data_type
             nodedef = node.nodedef
 
-            for mx_input in mx_node.getInputs():
+            for mx_input in mx_node.getActiveInputs():
                 input_name = mx_input.getName()
-                nd_input = nodedef.getInput(input_name)
+                nd_input = nodedef.getActiveInput(input_name)
                 if nd_input.getAttribute('uniform') == 'true':
                     node.set_param_value(input_name, parse_value(
                         node, mx_input.getValue(), mx_input.getType(), file_prefix))
@@ -563,7 +564,7 @@ def import_materialx_from_file(node_tree, doc: mx.Document, file_path):
                     new_node = import_node(new_mx_node)
 
                     out_name = mx_input.getAttribute('output')
-                    if len(new_node.nodedef.getOutputs()) > 1 and out_name:
+                    if len(new_node.nodedef.getActiveOutputs()) > 1 and out_name:
                         new_node_output = new_node.outputs[out_name]
                     else:
                         new_node_output = new_node.outputs[0]
@@ -575,7 +576,7 @@ def import_materialx_from_file(node_tree, doc: mx.Document, file_path):
                 if new_nodegraph_name:
                     mx_output_name = mx_input.getAttribute('output')
                     new_mx_nodegraph = mx_nodegraph.getNodeGraph(new_nodegraph_name)
-                    mx_output = new_mx_nodegraph.getOutput(mx_output_name)
+                    mx_output = new_mx_nodegraph.getActiveOutput(mx_output_name)
                     node_name = mx_output.getNodeName()
                     new_mx_node = new_mx_nodegraph.getNode(node_name)
                     new_node = import_node(new_mx_node, mx_output_name)
@@ -583,7 +584,7 @@ def import_materialx_from_file(node_tree, doc: mx.Document, file_path):
                         continue
 
                     out_name = mx_output.getAttribute('output')
-                    if len(new_node.nodedef.getOutputs()) > 1 and out_name:
+                    if len(new_node.nodedef.getActiveOutputs()) > 1 and out_name:
                         new_node_output = new_node.outputs[out_name]
                     else:
                         new_node_output = new_node.outputs[0]
@@ -682,3 +683,15 @@ def get_output_node(material):
                  node.inputs['surfaceshader'].links), None)
 
     return mx_output_node
+
+
+def get_doc(filepath):
+    print(MTLX_DOC)
+    if filepath not in MTLX_DOC:
+        print(MTLX_DOC)
+        doc = mx.createDocument()
+        search_path = mx.FileSearchPath(str(MX_LIBS_DIR))
+        mx.readFromXmlFile(doc, str(MX_LIBS_DIR / filepath), searchPath=search_path)
+        MTLX_DOC[filepath] = doc
+
+    return MTLX_DOC[filepath]
