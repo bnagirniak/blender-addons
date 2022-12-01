@@ -47,4 +47,4 @@ def unregister():
 
     ui.unregister()
     nodes.unregister()
-    preferences.register()
+    preferences.unregister()
