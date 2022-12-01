@@ -673,7 +673,7 @@ def get_output_node(material):
         return None
 
     bl_output_node = next((node for node in material.node_tree.nodes if
-                 node.bl_idname == ShaderNodeOutputMaterial.__name__ and
+                 node.bl_idname == 'ShaderNodeOutputMaterial' and
                  node.is_active_output and node.inputs['Surface'].links), None)
 
     if bl_output_node:

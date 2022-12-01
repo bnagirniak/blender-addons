@@ -3,9 +3,7 @@
 
 import bpy
 
-from . import (
-    ui
-)
+from . import ui
 
 register_classes, unregister_classes = bpy.utils.register_classes_factory([
     ui.MATERIAL_OP_import_file,
