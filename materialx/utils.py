@@ -667,8 +667,6 @@ def get_materialx_data(material, obj: bpy.types.Object):
 
 
 def get_output_node(material):
-    from .bl_nodes.output import ShaderNodeOutputMaterial
-
     if not material.node_tree:
         return None
 
