@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 # Copyright 2022, AMD
 
+import bpy
+
 from collections import defaultdict
 
 from nodeitems_utils import NodeCategory, NodeItem
@@ -11,7 +13,7 @@ from ..utils import title_str, code_str, with_prefix
 class MxNodeCategory(NodeCategory):
     @classmethod
     def poll(cls, context):
-        return context.space_data.tree_type == with_prefix('MxNodeTree')
+        return context.space_data.tree_type == 'ShaderNodeTree'
 
 
 def get_node_categories():

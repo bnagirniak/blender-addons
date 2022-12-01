@@ -25,10 +25,8 @@ import bpy
 
 from . import (
     preferences,
-    node_tree,
     nodes,
-    matlib,
-    material,
+    ui,
     utils,
 )
 
@@ -37,7 +35,6 @@ log = logging.Log("__init__")
 
 
 register_classes, unregister_classes = bpy.utils.register_classes_factory([
-    node_tree.MxNodeTree,
     preferences.AddonPreferences,
 ])
 
@@ -47,8 +44,7 @@ def register():
 
     register_classes()
     nodes.register()
-    material.register()
-    matlib.register()
+    ui.register()
 
 
 def unregister():
@@ -56,7 +52,6 @@ def unregister():
 
     utils.clear_temp_dir()
 
-    matlib.unregister()
-    material.unregister()
+    ui.unregister()
     nodes.unregister()
     unregister_classes()

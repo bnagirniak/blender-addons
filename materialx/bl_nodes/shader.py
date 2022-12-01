@@ -2,6 +2,7 @@
 # Copyright 2022, AMD
 
 import math
+import MaterialX as mx
 
 from .node_parser import NodeParser
 from . import log
@@ -14,6 +15,9 @@ DEFAULT_WHITE_COLOR = (1.0, 1.0, 1.0)
 def enabled(val):
     if val is None:
         return False
+
+    if isinstance(val, mx.Node):
+        return True
 
     if isinstance(val.data, float) and math.isclose(val.data, 0.0):
         return False
