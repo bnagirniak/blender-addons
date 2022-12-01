@@ -2,16 +2,16 @@
 # Copyright 2022, AMD
 
 """
-MaterialX NodeTree addon + MaterialX online library
+MaterialX nodes addon
 """
 
 bl_info = {
-    "name": "MaterialX NodeTree",
-    "description": "MaterialX NodeTree addon + MaterialX online library",
+    "name": "MaterialX nodes",
+    "description": "MaterialX nodes addon",
     "author": "AMD",
     "version": (1, 0, 0),
     "blender": (3, 4, 0),
-    "location": "Editor Type -> MaterialX",
+    "location": "Editor Type -> Shader Editor",
     "doc_url": "{BLENDER_MANUAL_URL}/addons/materials/materialx.html",
     "warning": "Alpha",
     "support": "TESTING",
@@ -20,8 +20,6 @@ bl_info = {
 
 ADDON_ALIAS = "materialx"
 
-
-import bpy
 
 from . import (
     preferences,
@@ -34,15 +32,10 @@ from . import logging
 log = logging.Log("__init__")
 
 
-register_classes, unregister_classes = bpy.utils.register_classes_factory([
-    preferences.AddonPreferences,
-])
-
-
 def register():
     log("register")
 
-    register_classes()
+    preferences.register()
     nodes.register()
     ui.register()
 
@@ -54,4 +47,4 @@ def unregister():
 
     ui.unregister()
     nodes.unregister()
-    unregister_classes()
+    preferences.unregister()

@@ -42,3 +42,7 @@ def addon_preferences():
 
     return bpy.context.preferences.addons[ADDON_ALIAS].preferences
 
+
+register, unregister = bpy.utils.register_classes_factory([
+    AddonPreferences,
+])
