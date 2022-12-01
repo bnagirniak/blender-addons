@@ -9,16 +9,16 @@ import MaterialX as mx
 import bpy
 from bpy_extras.io_utils import ImportHelper, ExportHelper
 
-from .. import utils
-from ..utils import import_materialx_from_file, export
-from ..preferences import addon_preferences
+from . import utils
+from .utils import import_materialx_from_file, export
+from .preferences import addon_preferences
 
-from ..utils import logging
-log = logging.Log(tag='material.ui')
+from .utils import logging
+log = logging.Log(tag='ui')
 
 
-class MATERIAL_OP_import_file(bpy.types.Operator, ImportHelper):
-    bl_idname = utils.with_prefix('nodes_import_file')
+class MATERIALX_OP_import_file(bpy.types.Operator, ImportHelper):
+    bl_idname = utils.with_prefix('materialx_import_file')
     bl_label = "Import from File"
     bl_description = "Import MaterialX node tree from .mtlx file"
 
@@ -48,8 +48,8 @@ class MATERIAL_OP_import_file(bpy.types.Operator, ImportHelper):
         return {'FINISHED'}
 
 
-class MATERIAL_OP_export_file(bpy.types.Operator, ExportHelper):
-    bl_idname = utils.with_prefix('material_export_file')
+class MATERIALX_OP_export_file(bpy.types.Operator, ExportHelper):
+    bl_idname = utils.with_prefix('materialx_export_file')
     bl_label = "Export to File"
     bl_description = "Export material as MaterialX node tree to .mtlx file"
 
@@ -113,8 +113,8 @@ class MATERIAL_OP_export_file(bpy.types.Operator, ExportHelper):
         row.prop(self, 'texture_dir_name', text='')
 
 
-class MATERIAL_OP_export_console(bpy.types.Operator):
-    bl_idname = utils.with_prefix('material_export_console')
+class MATERIALX_OP_export_console(bpy.types.Operator):
+    bl_idname = utils.with_prefix('materialx_export_console')
     bl_label = "Export to Console"
     bl_description = "Export material as MaterialX node tree to console"
 
@@ -127,8 +127,8 @@ class MATERIAL_OP_export_console(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class MATERIAL_PT_tools(bpy.types.Panel):
-    bl_idname = utils.with_prefix('MATERIAL_PT_tools', '_', True)
+class MATERIALX_PT_tools(bpy.types.Panel):
+    bl_idname = utils.with_prefix('MATERIALX_PT_tools', '_', True)
     bl_label = "MaterialX Tools"
     bl_space_type = "NODE_EDITOR"
     bl_region_type = "UI"
@@ -143,14 +143,14 @@ class MATERIAL_PT_tools(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
 
-        layout.operator(MATERIAL_OP_import_file.bl_idname, icon='IMPORT')
-        layout.operator(MATERIAL_OP_export_file.bl_idname, icon='EXPORT')
+        layout.operator(MATERIALX_OP_import_file.bl_idname, icon='IMPORT')
+        layout.operator(MATERIALX_OP_export_file.bl_idname, icon='EXPORT')
 
 
-class MATERIAL_PT_dev(bpy.types.Panel):
-    bl_idname = utils.with_prefix('MATERIAL_PT_dev', '_', True)
+class MATERIALX_PT_dev(bpy.types.Panel):
+    bl_idname = utils.with_prefix('MATERIALX_PT_dev', '_', True)
     bl_label = "Dev"
-    bl_parent_id = MATERIAL_PT_tools.bl_idname
+    bl_parent_id = MATERIALX_PT_tools.bl_idname
     bl_space_type = "NODE_EDITOR"
     bl_region_type = "UI"
 
@@ -161,4 +161,13 @@ class MATERIAL_PT_dev(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-        layout.operator(MATERIAL_OP_export_console.bl_idname)
+        layout.operator(MATERIALX_OP_export_console.bl_idname)
+
+
+register, unregister = bpy.utils.register_classes_factory([
+    MATERIALX_OP_import_file,
+    MATERIALX_OP_export_file,
+    MATERIALX_OP_export_console,
+    MATERIALX_PT_tools,
+    MATERIALX_PT_dev,
+])
