@@ -686,7 +686,6 @@ def get_output_node(material):
 
 
 def get_doc(filepath):
-    print(MTLX_DOC)
     if filepath not in MTLX_DOC:
         print(MTLX_DOC)
         doc = mx.createDocument()
