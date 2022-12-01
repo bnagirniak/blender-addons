@@ -10,6 +10,8 @@ from .. import utils
 from .. import logging
 log = logging.Log("nodes.node")
 
+mtlx_documents = {}
+
 
 class MxNodeInputSocket(bpy.types.NodeSocket):
     bl_idname = utils.with_prefix('MxNodeInputSocket')
@@ -80,7 +82,13 @@ class MxNode(bpy.types.ShaderNode):
     def get_nodedef(cls, data_type):
         if not cls._data_types[data_type]['nd']:
             # loading nodedefs
-            doc = utils.get_doc(cls._file_path)
+            if cls._file_path not in mtlx_documents:
+                doc = mx.createDocument()
+                search_path = mx.FileSearchPath(str(utils.MX_LIBS_DIR))
+                mx.readFromXmlFile(doc, str(utils.MX_LIBS_DIR / cls._file_path), searchPath=search_path)
+                mtlx_documents[cls._file_path] = doc
+
+            doc = mtlx_documents[cls._file_path]
 
             for val in cls._data_types.values():
                 val['nd'] = doc.getNodeDef(val['nd_name'])

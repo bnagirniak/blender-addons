@@ -35,7 +35,6 @@ NODE_LAYER_SEPARATION_WIDTH = 280
 NODE_LAYER_SHIFT_X = 30
 NODE_LAYER_SHIFT_Y = 100
 
-MTLX_DOC = {}
 
 def with_prefix(name, separator='.', upper=False):
     return f"{ADDON_ALIAS.upper() if upper else ADDON_ALIAS}{separator}{name}"
@@ -683,15 +682,3 @@ def get_output_node(material):
                  node.inputs['surfaceshader'].links), None)
 
     return mx_output_node
-
-
-def get_doc(filepath):
-    print(MTLX_DOC)
-    if filepath not in MTLX_DOC:
-        print(MTLX_DOC)
-        doc = mx.createDocument()
-        search_path = mx.FileSearchPath(str(MX_LIBS_DIR))
-        mx.readFromXmlFile(doc, str(MX_LIBS_DIR / filepath), searchPath=search_path)
-        MTLX_DOC[filepath] = doc
-
-    return MTLX_DOC[filepath]
