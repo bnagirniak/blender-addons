@@ -246,43 +246,16 @@ def get_socket_color(mx_type):
     return (0.63, 0.63, 0.63, 1.0)
 
 
-def export_mx_to_file(doc, filepath, *, mx_node_tree=None, is_export_deps=False,
-                      is_export_textures=False, texture_dir_name='textures',
-                      is_clean_texture_folder=True, is_clean_deps_folders=True):
+def export_to_file(doc, filepath, export_textures=False, texture_dir_name='textures'):
     root_dir = Path(filepath).parent
 
     if not os.path.isdir(root_dir):
         Path(root_dir).mkdir(parents=True, exist_ok=True)
 
-    if is_export_deps and mx_node_tree:
-        mx_libs_dir = root_dir / MX_LIBS_FOLDER
-        if os.path.isdir(mx_libs_dir) and is_clean_deps_folders:
-            shutil.rmtree(mx_libs_dir)
-
-        # we need to export every deps only once
-        unique_paths = set(node._file_path for node in mx_node_tree.nodes)
-
-        for mtlx_path in unique_paths:
-            # defining paths
-            source_path = MX_LIBS_DIR.parent / mtlx_path
-            full_dest_path = root_dir / mtlx_path
-            rel_dest_path = full_dest_path.relative_to(root_dir / MX_LIBS_FOLDER)
-            dest_path = root_dir / rel_dest_path
-
-            Path(dest_path.parent).mkdir(parents=True, exist_ok=True)
-            shutil.copy(source_path, dest_path)
-
-            mx.prependXInclude(doc, str(rel_dest_path))
-
-    if is_export_textures:
+    if export_textures:
         texture_dir = root_dir / texture_dir_name
-        if os.path.isdir(texture_dir) and is_clean_texture_folder:
-            shutil.rmtree(texture_dir)
-
         image_paths = set()
-
         i = 0
-
         input_files = (v for v in doc.traverseTree() if isinstance(v, mx.Input) and v.getType() == 'filename')
         for mx_input in input_files:
             if not os.path.isdir(texture_dir):
