@@ -25,10 +25,6 @@ MX_ADDON_LIBS_DIR = ADDON_ROOT_DIR / MX_LIBS_FOLDER
 NODE_CLASSES_FOLDER = "materialx_nodes"
 NODE_CLASSES_DIR = ADDON_DATA_DIR / NODE_CLASSES_FOLDER
 
-MATLIB_FOLDER = "matlib"
-MATLIB_DIR = ADDON_DATA_DIR / MATLIB_FOLDER
-MATLIB_URL = "https://api.matlib.gpuopen.com/api"
-
 TEMP_FOLDER = "bl-materialx"
 
 NODE_LAYER_SEPARATION_WIDTH = 280
@@ -246,7 +242,7 @@ def get_socket_color(mx_type):
     return (0.63, 0.63, 0.63, 1.0)
 
 
-def export_to_file(doc, filepath, export_textures=False, texture_dir_name='textures'):
+def export_to_file(doc, filepath, *, export_textures=False, texture_dir_name='textures', export_deps=True):
     root_dir = Path(filepath).parent
 
     if not os.path.isdir(root_dir):
@@ -288,7 +284,16 @@ def export_to_file(doc, filepath, export_textures=False, texture_dir_name='textu
             rel_dest_path = dest_path.relative_to(root_dir)
             mx_input.setValue(str(rel_dest_path), mx_input.getType())
 
-    mx.writeToXmlFile(doc, filepath)
+    if export_deps:
+        from .nodes import get_mx_node_cls
+
+        mx_nodes = [it for it in doc.traverseTree() if isinstance(it, mx.Node)]
+        node_classes = {get_mx_node_cls(mx_node)[0] for mx_node in mx_nodes}
+        print(node_classes)
+        for cls in node_classes:
+            mx.prependXInclude(doc, cls._file_path)
+
+    mx.writeToXmlFile(doc, str(filepath))
     log(f"Export MaterialX to {filepath}: completed successfully")
 
 
