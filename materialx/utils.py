@@ -289,7 +289,6 @@ def export_to_file(doc, filepath, *, export_textures=False, texture_dir_name='te
 
         mx_nodes = [it for it in doc.traverseTree() if isinstance(it, mx.Node)]
         node_classes = {get_mx_node_cls(mx_node)[0] for mx_node in mx_nodes}
-        print(node_classes)
         for cls in node_classes:
             mx.prependXInclude(doc, cls._file_path)
 
