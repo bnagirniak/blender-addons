@@ -81,7 +81,10 @@ class MATERIALX_OP_export_file(bpy.types.Operator, ExportHelper):
         if not doc:
             return {'CANCELLED'}
 
-        utils.export_to_file(doc, self.filepath, self.export_textures, self.texture_dir_name)
+        utils.export_to_file(doc, self.filepath,
+                             export_textures=self.export_textures,
+                             texture_dir_name=self.texture_dir_name,
+                             export_deps=False)
 
         return {'FINISHED'}
 
