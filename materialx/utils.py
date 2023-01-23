@@ -250,7 +250,6 @@ def export_to_file(doc, filepath, *, export_textures=False, texture_dir_name='te
     if export_textures:
         texture_dir = root_dir / texture_dir_name
         image_paths = set()
-        i = 0
         mx_input_files = (v for v in doc.traverseTree() if isinstance(v, mx.Input) and v.getType() == 'filename')
         for mx_input in mx_input_files:
             texture_dir.mkdir(parents=True, exist_ok=True)
@@ -272,18 +271,12 @@ def export_to_file(doc, filepath, *, export_textures=False, texture_dir_name='te
 
             if source_path not in image_paths:
                 image_paths.add(source_path)
-
-                if dest_path.is_file():
-                    i += 1
-                    dest_path = texture_dir / f"{source_path.stem}_{i}{source_path.suffix}"
-                else:
-                    dest_path = texture_dir / f"{source_path.stem}{source_path.suffix}"
-
+                dest_path = texture_dir / source_path.name
                 shutil.copy(source_path, dest_path)
                 log(f"Export file {source_path} to {dest_path}: completed successfully")
 
             rel_dest_path = dest_path.relative_to(root_dir)
-            mx_input.setValue(str(rel_dest_path), mx_input.getType())
+            mx_input.setValue(rel_dest_path.as_posix(), mx_input.getType())
 
     if export_deps:
         from .nodes import get_mx_node_cls
@@ -294,12 +287,13 @@ def export_to_file(doc, filepath, *, export_textures=False, texture_dir_name='te
         for deps_file in deps_files:
             deps_file = Path(deps_file)
             if copy_deps:
-                dest_path = root_dir / deps_file.relative_to(deps_file.parent.parent)
+                rel_path = deps_file.relative_to(deps_file.parent.parent)
+                dest_path = root_dir / rel_path
                 dest_path.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy(deps_file, dest_path)
-                deps_file = dest_path
+                deps_file = rel_path
 
-            mx.prependXInclude(doc, deps_file)
+            mx.prependXInclude(doc, str(deps_file))
 
     mx.writeToXmlFile(doc, str(filepath))
     log(f"Export MaterialX to {filepath}: completed successfully")

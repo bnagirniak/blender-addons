@@ -89,8 +89,10 @@ class MATERIALX_OP_export_file(bpy.types.Operator, ExportHelper):
         utils.export_to_file(doc, self.filepath,
                              export_textures=self.export_textures,
                              texture_dir_name=self.texture_dir_name,
-                             export_deps=False)
+                             export_deps=self.export_deps,
+                             copy_deps=self.export_deps)
 
+        log.info(f"Succesfully exported material '{context.material.name}' into {self.filepath}")
         return {'FINISHED'}
 
     def draw(self, context):
