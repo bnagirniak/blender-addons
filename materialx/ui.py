@@ -65,15 +65,20 @@ class MATERIALX_OP_export_file(bpy.types.Operator, ExportHelper):
         options={'HIDDEN'},
     )
     export_textures: bpy.props.BoolProperty(
-        name="Export textures",
+        name="Export Textures",
         description="Export bound textures to corresponded folder",
         default=True
     )
     texture_dir_name: bpy.props.StringProperty(
-        name="Folder name",
+        name="Folder Name",
         description="Texture folder name used for exporting files",
         default='textures',
         maxlen=1024,
+    )
+    export_deps: bpy.props.BoolProperty(
+        name="Export Dependencies",
+        description="Export MaterialX library dependencies",
+        default=True
     )
 
     def execute(self, context):
@@ -95,6 +100,8 @@ class MATERIALX_OP_export_file(bpy.types.Operator, ExportHelper):
         row = col.row()
         row.enabled = self.export_textures
         row.prop(self, 'texture_dir_name', text='')
+
+        self.layout.prop(self, 'export_deps')
 
 
 class MATERIALX_OP_export_console(bpy.types.Operator):

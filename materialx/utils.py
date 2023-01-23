@@ -242,37 +242,38 @@ def get_socket_color(mx_type):
     return (0.63, 0.63, 0.63, 1.0)
 
 
-def export_to_file(doc, filepath, *, export_textures=False, texture_dir_name='textures', export_deps=True):
+def export_to_file(doc, filepath, *, export_textures=False, texture_dir_name='textures',
+                   export_deps=False, copy_deps=False):
     root_dir = Path(filepath).parent
-
-    if not os.path.isdir(root_dir):
-        Path(root_dir).mkdir(parents=True, exist_ok=True)
+    root_dir.mkdir(parents=True, exist_ok=True)
 
     if export_textures:
         texture_dir = root_dir / texture_dir_name
         image_paths = set()
         i = 0
-        input_files = (v for v in doc.traverseTree() if isinstance(v, mx.Input) and v.getType() == 'filename')
-        for mx_input in input_files:
-            if not os.path.isdir(texture_dir):
-                Path(texture_dir).mkdir(parents=True, exist_ok=True)
+        mx_input_files = (v for v in doc.traverseTree() if isinstance(v, mx.Input) and v.getType() == 'filename')
+        for mx_input in mx_input_files:
+            texture_dir.mkdir(parents=True, exist_ok=True)
 
-            mx_value = mx_input.getValue()
-            if not mx_value:
-                log.warn(f"Skipping wrong {mx_input.getType()} input value. Expected: path, got {mx_value}")
+            val = mx_input.getValue()
+            if not val:
+                log.warn(f"Skipping wrong {mx_input.getType()} input value. Expected: path, got {val}")
                 continue
 
-            source_path = Path(mx_value)
-            if not os.path.isfile(source_path):
+            source_path = Path(val)
+            if not source_path.is_file():
                 log.warn("Image is missing", source_path)
+                continue
+
+            if source_path in image_paths:
                 continue
 
             dest_path = texture_dir / source_path.name
 
             if source_path not in image_paths:
-                image_paths.update([source_path])
+                image_paths.add(source_path)
 
-                if os.path.isfile(dest_path):
+                if dest_path.is_file():
                     i += 1
                     dest_path = texture_dir / f"{source_path.stem}_{i}{source_path.suffix}"
                 else:
@@ -287,10 +288,18 @@ def export_to_file(doc, filepath, *, export_textures=False, texture_dir_name='te
     if export_deps:
         from .nodes import get_mx_node_cls
 
-        mx_nodes = [it for it in doc.traverseTree() if isinstance(it, mx.Node)]
-        node_classes = {get_mx_node_cls(mx_node)[0] for mx_node in mx_nodes}
-        for cls in node_classes:
-            mx.prependXInclude(doc, cls._file_path)
+        deps_files = {get_mx_node_cls(mx_node)[0]._file_path
+                      for mx_node in (it for it in doc.traverseTree() if isinstance(it, mx.Node))}
+
+        for deps_file in deps_files:
+            deps_file = Path(deps_file)
+            if copy_deps:
+                dest_path = root_dir / deps_file.relative_to(deps_file.parent.parent)
+                dest_path.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy(deps_file, dest_path)
+                deps_file = dest_path
+
+            mx.prependXInclude(doc, deps_file)
 
     mx.writeToXmlFile(doc, str(filepath))
     log(f"Export MaterialX to {filepath}: completed successfully")
