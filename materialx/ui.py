@@ -10,7 +10,6 @@ import bpy
 from bpy_extras.io_utils import ImportHelper, ExportHelper
 
 from . import utils
-from .utils import import_materialx_from_file, export
 from .preferences import addon_preferences
 
 from .utils import logging
@@ -39,7 +38,7 @@ class MATERIALX_OP_import_file(bpy.types.Operator, ImportHelper):
         search_path.append(str(utils.MX_LIBS_DIR))
         try:
             mx.readFromXmlFile(doc, str(mtlx_file))
-            import_materialx_from_file(mx_node_tree, doc, mtlx_file)
+            utils.import_materialx_from_file(mx_node_tree, doc, mtlx_file)
 
         except Exception as e:
             log.error(traceback.format_exc(), mtlx_file)
@@ -53,7 +52,6 @@ class MATERIALX_OP_export_file(bpy.types.Operator, ExportHelper):
     bl_label = "Export to File"
     bl_description = "Export material as MaterialX node tree to .mtlx file"
 
-    # region properties
     filename_ext = ".mtlx"
 
     filepath: bpy.props.StringProperty(
@@ -66,51 +64,46 @@ class MATERIALX_OP_export_file(bpy.types.Operator, ExportHelper):
         default="*.mtlx",
         options={'HIDDEN'},
     )
-    is_export_deps: bpy.props.BoolProperty(
-        name="Include dependencies",
-        description="Export used MaterialX dependencies",
-        default=False
-    )
-    is_export_textures: bpy.props.BoolProperty(
-        name="Export textures",
+    export_textures: bpy.props.BoolProperty(
+        name="Export Textures",
         description="Export bound textures to corresponded folder",
         default=True
     )
-    is_clean_texture_folder: bpy.props.BoolProperty(
-        name="Сlean texture folder",
-        description="Сlean texture folder before export",
-        default=False
-    )
     texture_dir_name: bpy.props.StringProperty(
-        name="Folder name",
+        name="Folder Name",
         description="Texture folder name used for exporting files",
         default='textures',
         maxlen=1024,
     )
-    # endregion
+    export_deps: bpy.props.BoolProperty(
+        name="Export Dependencies",
+        description="Export MaterialX library dependencies",
+        default=True
+    )
 
     def execute(self, context):
-        doc = export(context.material, None)
+        doc = utils.export(context.material, None)
         if not doc:
             return {'CANCELLED'}
 
-        utils.export_mx_to_file(doc, self.filepath,
-                                mx_node_tree=None,
-                                # is_export_deps=self.is_export_deps,
-                                is_export_textures=self.is_export_textures,
-                                texture_dir_name=self.texture_dir_name)
+        utils.export_to_file(doc, self.filepath,
+                             export_textures=self.export_textures,
+                             texture_dir_name=self.texture_dir_name,
+                             export_deps=self.export_deps,
+                             copy_deps=self.export_deps)
 
+        log.info(f"Succesfully exported material '{context.material.name}' into {self.filepath}")
         return {'FINISHED'}
 
     def draw(self, context):
-        # self.layout.prop(self, 'is_export_deps')
-
         col = self.layout.column(align=False)
-        col.prop(self, 'is_export_textures')
+        col.prop(self, 'export_textures')
 
         row = col.row()
-        row.enabled = self.is_export_textures
+        row.enabled = self.export_textures
         row.prop(self, 'texture_dir_name', text='')
+
+        self.layout.prop(self, 'export_deps')
 
 
 class MATERIALX_OP_export_console(bpy.types.Operator):
@@ -119,7 +112,7 @@ class MATERIALX_OP_export_console(bpy.types.Operator):
     bl_description = "Export material as MaterialX node tree to console"
 
     def execute(self, context):
-        doc = export(context.material, context.object)
+        doc = utils.export(context.material, context.object)
         if not doc:
             return {'CANCELLED'}
 

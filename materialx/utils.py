@@ -25,10 +25,6 @@ MX_ADDON_LIBS_DIR = ADDON_ROOT_DIR / MX_LIBS_FOLDER
 NODE_CLASSES_FOLDER = "materialx_nodes"
 NODE_CLASSES_DIR = ADDON_DATA_DIR / NODE_CLASSES_FOLDER
 
-MATLIB_FOLDER = "matlib"
-MATLIB_DIR = ADDON_DATA_DIR / MATLIB_FOLDER
-MATLIB_URL = "https://api.matlib.gpuopen.com/api"
-
 TEMP_FOLDER = "bl-materialx"
 
 NODE_LAYER_SEPARATION_WIDTH = 280
@@ -246,76 +242,60 @@ def get_socket_color(mx_type):
     return (0.63, 0.63, 0.63, 1.0)
 
 
-def export_mx_to_file(doc, filepath, *, mx_node_tree=None, is_export_deps=False,
-                      is_export_textures=False, texture_dir_name='textures',
-                      is_clean_texture_folder=True, is_clean_deps_folders=True):
+def export_to_file(doc, filepath, *, export_textures=False, texture_dir_name='textures',
+                   export_deps=False, copy_deps=False):
     root_dir = Path(filepath).parent
+    root_dir.mkdir(parents=True, exist_ok=True)
 
-    if not os.path.isdir(root_dir):
-        Path(root_dir).mkdir(parents=True, exist_ok=True)
-
-    if is_export_deps and mx_node_tree:
-        mx_libs_dir = root_dir / MX_LIBS_FOLDER
-        if os.path.isdir(mx_libs_dir) and is_clean_deps_folders:
-            shutil.rmtree(mx_libs_dir)
-
-        # we need to export every deps only once
-        unique_paths = set(node._file_path for node in mx_node_tree.nodes)
-
-        for mtlx_path in unique_paths:
-            # defining paths
-            source_path = MX_LIBS_DIR.parent / mtlx_path
-            full_dest_path = root_dir / mtlx_path
-            rel_dest_path = full_dest_path.relative_to(root_dir / MX_LIBS_FOLDER)
-            dest_path = root_dir / rel_dest_path
-
-            Path(dest_path.parent).mkdir(parents=True, exist_ok=True)
-            shutil.copy(source_path, dest_path)
-
-            mx.prependXInclude(doc, str(rel_dest_path))
-
-    if is_export_textures:
+    if export_textures:
         texture_dir = root_dir / texture_dir_name
-        if os.path.isdir(texture_dir) and is_clean_texture_folder:
-            shutil.rmtree(texture_dir)
-
         image_paths = set()
+        mx_input_files = (v for v in doc.traverseTree() if isinstance(v, mx.Input) and v.getType() == 'filename')
+        for mx_input in mx_input_files:
+            texture_dir.mkdir(parents=True, exist_ok=True)
 
-        i = 0
-
-        input_files = (v for v in doc.traverseTree() if isinstance(v, mx.Input) and v.getType() == 'filename')
-        for mx_input in input_files:
-            if not os.path.isdir(texture_dir):
-                Path(texture_dir).mkdir(parents=True, exist_ok=True)
-
-            mx_value = mx_input.getValue()
-            if not mx_value:
-                log.warn(f"Skipping wrong {mx_input.getType()} input value. Expected: path, got {mx_value}")
+            val = mx_input.getValue()
+            if not val:
+                log.warn(f"Skipping wrong {mx_input.getType()} input value. Expected: path, got {val}")
                 continue
 
-            source_path = Path(mx_value)
-            if not os.path.isfile(source_path):
+            source_path = Path(val)
+            if not source_path.is_file():
                 log.warn("Image is missing", source_path)
+                continue
+
+            if source_path in image_paths:
                 continue
 
             dest_path = texture_dir / source_path.name
 
             if source_path not in image_paths:
-                image_paths.update([source_path])
-
-                if os.path.isfile(dest_path):
-                    i += 1
-                    dest_path = texture_dir / f"{source_path.stem}_{i}{source_path.suffix}"
-                else:
-                    dest_path = texture_dir / f"{source_path.stem}{source_path.suffix}"
-
+                image_paths.add(source_path)
+                dest_path = texture_dir / source_path.name
                 shutil.copy(source_path, dest_path)
                 log(f"Export file {source_path} to {dest_path}: completed successfully")
 
             rel_dest_path = dest_path.relative_to(root_dir)
-            mx_input.setValue(str(rel_dest_path), mx_input.getType())
+            mx_input.setValue(rel_dest_path.as_posix(), mx_input.getType())
 
-    mx.writeToXmlFile(doc, filepath)
+    if export_deps:
+        from .nodes import get_mx_node_cls
+
+        deps_files = {get_mx_node_cls(mx_node)[0]._file_path
+                      for mx_node in (it for it in doc.traverseTree() if isinstance(it, mx.Node))}
+
+        for deps_file in deps_files:
+            deps_file = Path(deps_file)
+            if copy_deps:
+                rel_path = deps_file.relative_to(deps_file.parent.parent)
+                dest_path = root_dir / rel_path
+                dest_path.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy(deps_file, dest_path)
+                deps_file = rel_path
+
+            mx.prependXInclude(doc, str(deps_file))
+
+    mx.writeToXmlFile(doc, str(filepath))
     log(f"Export MaterialX to {filepath}: completed successfully")
 
 
