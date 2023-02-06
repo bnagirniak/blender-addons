@@ -1,16 +1,17 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-# noinspection PyUnresolvedReferences
-import bpy
-# noinspection PyUnresolvedReferences
-import math
-# noinspection PyUnresolvedReferences
-from mathutils import Matrix, Vector
+import bpy  # noqa
+import math  # noqa
+from mathutils import Matrix, Vector  # noqa
 
-from typing import Callable, Any, Collection, Iterator
+from typing import TYPE_CHECKING, Callable, Any, Collection, Iterator, Optional, Sequence
 from bpy.types import Action, bpy_struct, FCurve
 
 import json
+
+if TYPE_CHECKING:
+    from ..rig_ui_template import PanelLayout
+
 
 rig_id = None
 
@@ -78,7 +79,6 @@ def overwrite_prop_animation(rig, bone, prop_name, value, frames):
 # Utilities for inserting keyframes and/or setting transforms ##
 ################################################################
 
-# noinspection SpellCheckingInspection
 SCRIPT_UTILITIES_KEYING = ['''
 ######################
 ## Keyframing tools ##
@@ -98,10 +98,10 @@ def get_keying_flags(context):
         flags.add('INSERTKEY_CYCLE_AWARE')
     return flags
 
-def get_autokey_flags(context, ignore_keyset=False):
+def get_autokey_flags(context, ignore_keyingset=False):
     "Retrieve the Auto Keyframe flags, or None if disabled."
     ts = context.scene.tool_settings
-    if ts.use_keyframe_insert_auto and (ignore_keyset or not ts.use_keyframe_insert_keyingset):
+    if ts.use_keyframe_insert_auto and (ignore_keyingset or not ts.use_keyframe_insert_keyingset):
         flags = get_keying_flags(context)
         if context.preferences.edit.use_keyframe_insert_available:
             flags.add('INSERTKEY_AVAILABLE')
@@ -118,7 +118,7 @@ def add_flags_if_set(base, new_flags):
     else:
         return base | new_flags
 
-def get_4d_rotlock(bone):
+def get_4d_rot_lock(bone):
     "Retrieve the lock status for 4D rotation."
     if bone.lock_rotations_4d:
         return [bone.lock_rotation_w, *bone.lock_rotation]
@@ -144,9 +144,9 @@ def keyframe_transform_properties(obj, bone_name, keyflags, *,
 
     if not no_rot:
         if bone.rotation_mode == 'QUATERNION':
-            keyframe_channels('rotation_quaternion', get_4d_rotlock(bone))
+            keyframe_channels('rotation_quaternion', get_4d_rot_lock(bone))
         elif bone.rotation_mode == 'AXIS_ANGLE':
-            keyframe_channels('rotation_axis_angle', get_4d_rotlock(bone))
+            keyframe_channels('rotation_axis_angle', get_4d_rot_lock(bone))
         else:
             keyframe_channels('rotation_euler', bone.lock_rotation)
 
@@ -272,12 +272,12 @@ def set_transform_from_matrix(obj, bone_name, matrix, *, space='POSE', undo_copy
     restore_channels('location', old_loc, bone.lock_location, no_loc or bone.bone.use_connect)
 
     if bone.rotation_mode == 'QUATERNION':
-        restore_channels('rotation_quaternion', old_rot_quat, get_4d_rotlock(bone), no_rot)
+        restore_channels('rotation_quaternion', old_rot_quat, get_4d_rot_lock(bone), no_rot)
         bone.rotation_axis_angle = old_rot_axis
         bone.rotation_euler = old_rot_euler
     elif bone.rotation_mode == 'AXIS_ANGLE':
         bone.rotation_quaternion = old_rot_quat
-        restore_channels('rotation_axis_angle', old_rot_axis, get_4d_rotlock(bone), no_rot)
+        restore_channels('rotation_axis_angle', old_rot_axis, get_4d_rot_lock(bone), no_rot)
         bone.rotation_euler = old_rot_euler
     else:
         bone.rotation_quaternion = old_rot_quat
@@ -305,7 +305,6 @@ exec(SCRIPT_UTILITIES_KEYING[-1])
 # Utilities for managing animation curves ##
 ############################################
 
-# noinspection SpellCheckingInspection
 SCRIPT_UTILITIES_CURVES = ['''
 ###########################
 ## Animation curve tools ##
@@ -414,7 +413,7 @@ class FCurveTable(object):
         return self.curve_map.get(ptr.path_from_id(prop_path))
 
     def list_all_prop_curves(self, ptr_set, path_set):
-        "Iterates over all FCurves matching the given object(s) and properti(es)."
+        "Iterates over all FCurves matching the given object(s) and properties."
         if isinstance(ptr_set, bpy.types.bpy_struct):
             ptr_set = [ptr_set]
         for ptr in ptr_set:
@@ -493,7 +492,6 @@ del bpy.types.WindowManager.rigify_transfer_start_frame
 del bpy.types.WindowManager.rigify_transfer_end_frame
 '''
 
-# noinspection SpellCheckingInspection
 _SCRIPT_UTILITIES_BAKE_OPS = '''
 class RIGIFY_OT_get_frame_range(bpy.types.Operator):
     bl_idname = "rigify.get_frame_range" + ('_'+rig_id if rig_id else '')
@@ -540,7 +538,6 @@ exec(_SCRIPT_UTILITIES_BAKE_OPS)
 
 SCRIPT_REGISTER_BAKE = ['RIGIFY_OT_get_frame_range']
 
-# noinspection SpellCheckingInspection
 SCRIPT_UTILITIES_BAKE = SCRIPT_UTILITIES_KEYING + SCRIPT_UTILITIES_CURVES + ['''
 ##################################
 # Common bake operator settings ##
@@ -765,7 +762,7 @@ class RigifySingleUpdateMixin(RigifyOperatorMixinBase):
     def execute(self, context):
         self.init_execute(context)
         obj = context.active_object
-        self.keyflags = get_autokey_flags(context, ignore_keyset=True)
+        self.keyflags = get_autokey_flags(context, ignore_keyingset=True)
         self.keyflags_switch = add_flags_if_set(self.keyflags, {'INSERTKEY_AVAILABLE'})
 
         try:
@@ -804,7 +801,6 @@ exec(SCRIPT_UTILITIES_BAKE[-1])
 
 SCRIPT_REGISTER_OP_CLEAR_KEYS = ['POSE_OT_rigify_clear_keyframes']
 
-# noinspection SpellCheckingInspection
 SCRIPT_UTILITIES_OP_CLEAR_KEYS = ['''
 #############################
 ## Generic Clear Keyframes ##
@@ -848,8 +844,8 @@ class POSE_OT_rigify_clear_keyframes(bpy.types.Operator):
 ''']
 
 
-# noinspection PyDefaultArgument,PyUnusedLocal
-def add_clear_keyframes_button(panel, *, bones=[], label='', text=''):
+def add_clear_keyframes_button(panel: 'PanelLayout', *,
+                               bones: Sequence[str] = (), text=''):
     panel.use_bake_settings()
     panel.script.add_utilities(SCRIPT_UTILITIES_OP_CLEAR_KEYS)
     panel.script.register_classes(SCRIPT_REGISTER_OP_CLEAR_KEYS)
@@ -866,7 +862,6 @@ def add_clear_keyframes_button(panel, *, bones=[], label='', text=''):
 
 SCRIPT_REGISTER_OP_SNAP = ['POSE_OT_rigify_generic_snap', 'POSE_OT_rigify_generic_snap_bake']
 
-# noinspection SpellCheckingInspection
 SCRIPT_UTILITIES_OP_SNAP = ['''
 #############################
 ## Generic Snap (FK to IK) ##
@@ -921,8 +916,10 @@ class POSE_OT_rigify_generic_snap_bake(RigifyGenericSnapBase, RigifyBakeKeyframe
 ''']
 
 
-def add_fk_ik_snap_buttons(panel, op_single, op_bake, *, label=None, rig_name='', properties=None,
-                           clear_bones=None, compact=None):
+def add_fk_ik_snap_buttons(panel: 'PanelLayout', op_single: str, op_bake: str, *,
+                           label, rig_name='', properties: dict[str, Any],
+                           clear_bones: Optional[list[str]] = None,
+                           compact: Optional[bool] = None):
     assert label and properties
 
     if rig_name:
@@ -943,9 +940,12 @@ def add_fk_ik_snap_buttons(panel, op_single, op_bake, *, label=None, rig_name=''
         add_clear_keyframes_button(row, bones=clear_bones, text='Clear')
 
 
-# noinspection PyDefaultArgument
-def add_generic_snap(panel, *, output_bones=[], input_bones=[], input_ctrl_bones=[], label='Snap',
-                     rig_name='', undo_copy_scale=False, compact=None, clear=True, locks=None, tooltip=None):
+def add_generic_snap(panel: 'PanelLayout', *,
+                     output_bones: Sequence[str] = (), input_bones: Sequence[str] = (),
+                     input_ctrl_bones: Sequence[str] = (), label='Snap',
+                     rig_name='', undo_copy_scale=False, compact: Optional[bool] = None,
+                     clear=True, locks: Optional[Sequence[bool]] = None,
+                     tooltip: Optional[str] = None):
     panel.use_bake_settings()
     panel.script.add_utilities(SCRIPT_UTILITIES_OP_SNAP)
     panel.script.register_classes(SCRIPT_REGISTER_OP_SNAP)
@@ -971,9 +971,11 @@ def add_generic_snap(panel, *, output_bones=[], input_bones=[], input_ctrl_bones
     )
 
 
-# noinspection PyDefaultArgument
-def add_generic_snap_fk_to_ik(panel, *, fk_bones=[], ik_bones=[], ik_ctrl_bones=[], label='FK->IK',
-                              rig_name='', undo_copy_scale=False, compact=None, clear=True):
+def add_generic_snap_fk_to_ik(panel: 'PanelLayout', *,
+                              fk_bones: Sequence[str] = (), ik_bones: Sequence[str] = (),
+                              ik_ctrl_bones: Sequence[str] = (), label='FK->IK',
+                              rig_name='', undo_copy_scale=False,
+                              compact: Optional[bool] = None, clear=True):
     add_generic_snap(
         panel, output_bones=fk_bones, input_bones=ik_bones, input_ctrl_bones=ik_ctrl_bones,
         label=label, rig_name=rig_name, undo_copy_scale=undo_copy_scale, compact=compact, clear=clear

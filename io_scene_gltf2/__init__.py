@@ -4,8 +4,8 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (3, 5, 0),
-    'blender': (3, 3, 0),
+    "version": (3, 5, 21),
+    'blender': (3, 4, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
     'warning': '',
@@ -121,6 +121,16 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
 
     bl_options = {'PRESET'}
 
+    # Don't use export_ prefix here, I don't want it to be saved with other export settings
+    gltf_export_id: StringProperty(
+        name='Identifier',
+        description=(
+            'Identifier of caller (in case of add-on calling this exporter). '
+            'Can be useful in case of Extension added by other add-ons'
+        ),
+        default=''
+    )
+
     export_format: EnumProperty(
         name='Format',
         items=(('GLB', 'glTF Binary (.glb)',
@@ -177,6 +187,14 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         name='Textures',
         description='Folder to place texture files in. Relative to the .gltf file',
         default='',
+    )
+
+    export_jpeg_quality: IntProperty(
+        name='JPEG quality',
+        description='Quality of JPEG export',
+        default=75,
+        min=0,
+        max=100
     )
 
     export_keep_originals: BoolProperty(
@@ -289,7 +307,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
 
     export_attributes: BoolProperty(
         name='Attributes',
-        description='Export Attributes',
+        description='Export Attributes (when starting with underscore)',
         default=False
     )
 
@@ -342,7 +360,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
     use_active_collection: BoolProperty(
         name='Active Collection',
         description='Export objects in the active collection only',
-        default=False        
+        default=False
     )
 
     use_active_scene: BoolProperty(
@@ -558,6 +576,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         import os
         import datetime
         from .blender.exp import gltf2_blender_export
+        from .io.com.gltf2_io_path import path_to_uri
 
         if self.will_save_settings:
             self.save_settings(context)
@@ -568,7 +587,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         export_settings = {}
 
         export_settings['timestamp'] = datetime.datetime.now()
-
+        export_settings['gltf_export_id'] = self.gltf_export_id
         export_settings['gltf_filepath'] = self.filepath
         export_settings['gltf_filedirectory'] = os.path.dirname(export_settings['gltf_filepath']) + '/'
         export_settings['gltf_texturedirectory'] = os.path.join(
@@ -579,6 +598,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
 
         export_settings['gltf_format'] = self.export_format
         export_settings['gltf_image_format'] = self.export_image_format
+        export_settings['gltf_jpeg_quality'] = self.export_jpeg_quality
         export_settings['gltf_copyright'] = self.export_copyright
         export_settings['gltf_texcoords'] = self.export_texcoords
         export_settings['gltf_normals'] = self.export_normals
@@ -606,7 +626,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
 
         export_settings['gltf_visible'] = self.use_visible
         export_settings['gltf_renderable'] = self.use_renderable
-        
+
         export_settings['gltf_active_collection'] = self.use_active_collection
         if self.use_active_collection:
             export_settings['gltf_active_collection_with_nested'] = self.use_active_collection_with_nested
@@ -661,7 +681,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
 
         export_settings['gltf_binary'] = bytearray()
         export_settings['gltf_binaryfilename'] = (
-            os.path.splitext(os.path.basename(self.filepath))[0] + '.bin'
+            path_to_uri(os.path.splitext(os.path.basename(self.filepath))[0] + '.bin')
         )
 
         user_extensions = []
@@ -867,6 +887,8 @@ class GLTF_PT_export_geometry_material(bpy.types.Panel):
         col = layout.column()
         col.active = operator.export_materials == "EXPORT"
         col.prop(operator, 'export_image_format')
+        if operator.export_image_format in ["AUTO", "JPEG"]:
+            col.prop(operator, 'export_jpeg_quality')
 
 class GLTF_PT_export_geometry_original_pbr(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'

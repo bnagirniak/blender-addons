@@ -27,6 +27,7 @@ from bpy.props import (
 from bpy_extras.io_utils import ImportHelper, ExportHelper
 from gpu_extras.batch import batch_for_shader
 from mathutils import Vector
+from .util import match_files_to_socket_names, split_into_components
 from nodeitems_utils import node_categories_iter, NodeItemCustom
 from math import cos, sin, pi, hypot
 from os import path
@@ -679,7 +680,7 @@ def get_output_location(tree):
 class NWPrincipledPreferences(bpy.types.PropertyGroup):
     base_color: StringProperty(
         name='Base Color',
-        default='diffuse diff albedo base col color',
+        default='diffuse diff albedo base col color basecolor',
         description='Naming Components for Base Color maps')
     sss_color: StringProperty(
         name='Subsurface Color',
@@ -1283,13 +1284,8 @@ class NWAddAttrNode(Operator, NWBase):
 class NWPreviewNode(Operator, NWBase):
     bl_idname = "node.nw_preview_node"
     bl_label = "Preview Node"
-    bl_description = "Connect active node to the Node Group output or the Material Output"
+    bl_description = "Connect the chosen node to the output or the Viewer Node"
     bl_options = {'REGISTER', 'UNDO'}
-
-    # If false, the operator is not executed if the current node group happens to be a geometry nodes group.
-    # This is needed because geometry nodes has its own viewer node that uses the same shortcut as in the compositor.
-    # Geometry Nodes support can be removed here once the viewer node is supported in the viewport.
-    run_in_geometry_nodes: BoolProperty(default=True)
 
     def __init__(self):
         self.shader_output_type = ""
@@ -1299,7 +1295,7 @@ class NWPreviewNode(Operator, NWBase):
     def poll(cls, context):
         if nw_check(context):
             space = context.space_data
-            if space.tree_type == 'ShaderNodeTree' or space.tree_type == 'GeometryNodeTree':
+            if space.tree_type == 'ShaderNodeTree':
                 if context.active_node:
                     if context.active_node.type != "OUTPUT_MATERIAL" or context.active_node.type != "OUTPUT_WORLD":
                         return True
@@ -1397,6 +1393,8 @@ class NWPreviewNode(Operator, NWBase):
         # get all viewer sockets in a material tree
         for node in tree.nodes:
             if hasattr(node, "node_tree"):
+                if node.node_tree is None:
+                    continue
                 for socket in node.node_tree.outputs:
                     if is_viewer_socket(socket) and (socket not in sockets):
                         sockets.append(socket)
@@ -1431,9 +1429,6 @@ class NWPreviewNode(Operator, NWBase):
 
     def invoke(self, context, event):
         space = context.space_data
-        # Ignore operator when running in wrong context.
-        if self.run_in_geometry_nodes != (space.tree_type == "GeometryNodeTree"):
-            return {'PASS_THROUGH'}
 
         shader_type = space.shader_type
         self.init_shader_variables(space, shader_type)
@@ -1445,90 +1440,6 @@ class NWPreviewNode(Operator, NWBase):
             nodes, links = active_tree.nodes, active_tree.links
             base_node_tree = space.node_tree
             active = nodes.active
-
-            # For geometry node trees we just connect to the group output
-            if space.tree_type == "GeometryNodeTree":
-                valid = False
-                if active:
-                    for out in active.outputs:
-                        if is_visible_socket(out):
-                            valid = True
-                            break
-                # Exit early
-                if not valid:
-                    return {'FINISHED'}
-
-                delete_sockets = []
-
-                # Scan through all nodes in tree including nodes inside of groups to find viewer sockets
-                self.scan_nodes(base_node_tree, delete_sockets)
-
-                # Find (or create if needed) the output of this node tree
-                geometryoutput = self.ensure_group_output(base_node_tree)
-
-                # Analyze outputs, make links
-                out_i = None
-                valid_outputs = []
-                for i, out in enumerate(active.outputs):
-                    if is_visible_socket(out) and out.type == 'GEOMETRY':
-                        valid_outputs.append(i)
-                if valid_outputs:
-                    out_i = valid_outputs[0]  # Start index of node's outputs
-                for i, valid_i in enumerate(valid_outputs):
-                    for out_link in active.outputs[valid_i].links:
-                        if is_viewer_link(out_link, geometryoutput):
-                            if nodes == base_node_tree.nodes or self.link_leads_to_used_socket(out_link):
-                                if i < len(valid_outputs) - 1:
-                                    out_i = valid_outputs[i + 1]
-                                else:
-                                    out_i = valid_outputs[0]
-
-                make_links = []  # store sockets for new links
-                if active.outputs:
-                    # If there is no 'GEOMETRY' output type - We can't preview the node
-                    if out_i is None:
-                        return {'FINISHED'}
-                    socket_type = 'GEOMETRY'
-                    # Find an input socket of the output of type geometry
-                    geometryoutindex = None
-                    for i,inp in enumerate(geometryoutput.inputs):
-                        if inp.type == socket_type:
-                            geometryoutindex = i
-                            break
-                    if geometryoutindex is None:
-                        # Create geometry socket
-                        geometryoutput.inputs.new(socket_type, 'Geometry')
-                        geometryoutindex = len(geometryoutput.inputs) - 1
-
-                    make_links.append((active.outputs[out_i], geometryoutput.inputs[geometryoutindex]))
-                    output_socket = geometryoutput.inputs[geometryoutindex]
-                    for li_from, li_to in make_links:
-                        base_node_tree.links.new(li_from, li_to)
-                    tree = base_node_tree
-                    link_end = output_socket
-                    while tree.nodes.active != active:
-                        node = tree.nodes.active
-                        index = self.ensure_viewer_socket(node,'NodeSocketGeometry', connect_socket=active.outputs[out_i] if node.node_tree.nodes.active == active else None)
-                        link_start = node.outputs[index]
-                        node_socket = node.node_tree.outputs[index]
-                        if node_socket in delete_sockets:
-                            delete_sockets.remove(node_socket)
-                        tree.links.new(link_start, link_end)
-                        # Iterate
-                        link_end = self.ensure_group_output(node.node_tree).inputs[index]
-                        tree = tree.nodes.active.node_tree
-                    tree.links.new(active.outputs[out_i], link_end)
-
-                # Delete sockets
-                for socket in delete_sockets:
-                    tree = socket.id_data
-                    tree.outputs.remove(socket)
-
-                nodes.active = active
-                active.select = True
-                force_update(context)
-                return {'FINISHED'}
-
 
             # What follows is code for the shader editor
             output_types = [x.nodetype for x in
@@ -1909,7 +1820,7 @@ class NWMergeNodes(Operator, NWBase):
         items=(
             ('AUTO', 'Auto', 'Automatic Output Type Detection'),
             ('SHADER', 'Shader', 'Merge using ADD or MIX Shader'),
-            ('GEOMETRY', 'Geometry', 'Merge using Boolean or Join Geometry Node'),
+            ('GEOMETRY', 'Geometry', 'Merge using Mesh Boolean or Join Geometry Node'),
             ('MIX', 'Mix Node', 'Merge using Mix Nodes'),
             ('MATH', 'Math Node', 'Merge using Math Nodes'),
             ('ZCOMBINE', 'Z-Combine Node', 'Merge using Z-Combine Nodes'),
@@ -2163,7 +2074,7 @@ class NWMergeNodes(Operator, NWBase):
                         add_type = node_type + 'JoinGeometry'
                         add = self.merge_with_multi_input(nodes_list, merge_position, do_hide, loc_x, links, nodes, add_type,[0])
                     else:
-                        add_type = node_type + 'Boolean'
+                        add_type = node_type + 'MeshBoolean'
                         indices = [0,1] if mode == 'DIFFERENCE' else [1]
                         add = self.merge_with_multi_input(nodes_list, merge_position, do_hide, loc_x, links, nodes, add_type,indices)
                         add.operation = mode
@@ -2710,25 +2621,6 @@ class NWAddPrincipledSetup(Operator, NWBase, ImportHelper):
             self.report({'INFO'}, 'Select Principled BSDF')
             return {'CANCELLED'}
 
-        # Helper_functions
-        def split_into__components(fname):
-            # Split filename into components
-            # 'WallTexture_diff_2k.002.jpg' -> ['Wall', 'Texture', 'diff', 'k']
-            # Remove extension
-            fname = path.splitext(fname)[0]
-            # Remove digits
-            fname = ''.join(i for i in fname if not i.isdigit())
-            # Separate CamelCase by space
-            fname = re.sub(r"([a-z])([A-Z])", r"\g<1> \g<2>",fname)
-            # Replace common separators with SPACE
-            separators = ['_', '.', '-', '__', '--', '#']
-            for sep in separators:
-                fname = fname.replace(sep, ' ')
-
-            components = fname.split(' ')
-            components = [c.lower() for c in components]
-            return components
-
         # Filter textures names for texturetypes in filenames
         # [Socket Name, [abbreviations and keyword list], Filename placeholder]
         tags = context.preferences.addons[__name__].preferences.principled_tags
@@ -2750,19 +2642,7 @@ class NWAddPrincipledSetup(Operator, NWBase, ImportHelper):
         ['Ambient Occlusion', tags.ambient_occlusion.split(' '), None],
         ]
 
-        # Look through texture_types and set value as filename of first matched file
-        def match_files_to_socket_names():
-            for sname in socketnames:
-                for file in self.files:
-                    fname = file.name
-                    filenamecomponents = split_into__components(fname)
-                    matches = set(sname[1]).intersection(set(filenamecomponents))
-                    # TODO: ignore basename (if texture is named "fancy_metal_nor", it will be detected as metallic map, not normal map)
-                    if matches:
-                        sname[2] = fname
-                        break
-
-        match_files_to_socket_names()
+        match_files_to_socket_names(self.files, socketnames)
         # Remove socketnames without found files
         socketnames = [s for s in socketnames if s[2]
                        and path.exists(self.directory+s[2])]
@@ -2836,7 +2716,7 @@ class NWAddPrincipledSetup(Operator, NWBase, ImportHelper):
                 # NORMAL NODES
                 if sname[0] == 'Normal':
                     # Test if new texture node is normal or bump map
-                    fname_components = split_into__components(sname[2])
+                    fname_components = split_into_components(sname[2])
                     match_normal = set(normal_abbr).intersection(set(fname_components))
                     match_bump = set(bump_abbr).intersection(set(fname_components))
                     if match_normal:
@@ -2853,7 +2733,7 @@ class NWAddPrincipledSetup(Operator, NWBase, ImportHelper):
 
                 elif sname[0] == 'Roughness':
                     # Test if glossy or roughness map
-                    fname_components = split_into__components(sname[2])
+                    fname_components = split_into_components(sname[2])
                     match_rough = set(rough_abbr).intersection(set(fname_components))
                     match_gloss = set(gloss_abbr).intersection(set(fname_components))
 
@@ -4377,8 +4257,7 @@ kmi_defs = (
     # Swap Links
     (NWSwapLinks.bl_idname, 'S', 'PRESS', False, False, True, None, "Swap Links"),
     # Preview Node
-    (NWPreviewNode.bl_idname, 'LEFTMOUSE', 'PRESS', True, True, False, (('run_in_geometry_nodes', False),), "Preview node output"),
-    (NWPreviewNode.bl_idname, 'LEFTMOUSE', 'PRESS', False, True, True, (('run_in_geometry_nodes', True),), "Preview node output"),
+    (NWPreviewNode.bl_idname, 'LEFTMOUSE', 'PRESS', True, True, False, None, "Preview node output"),
     # Reload Images
     (NWReloadImages.bl_idname, 'R', 'PRESS', False, False, True, None, "Reload images"),
     # Lazy Mix
